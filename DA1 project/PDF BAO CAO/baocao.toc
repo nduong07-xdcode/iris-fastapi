@@ -1,0 +1,70 @@
+\babel@toc {vietnamese}{}\relax 
+\contentsline {chapter}{LỜI CẢM ƠN}{4}{chapter*.2}%
+\contentsline {chapter}{LỜI MỞ ĐẦU}{5}{chapter*.3}%
+\contentsline {chapter}{\numberline {1}Giới thiệu bài toán}{6}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Bối cảnh bài toán}{6}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Mục tiêu sản phẩm}{7}{section.1.2}%
+\contentsline {chapter}{\numberline {2}Mô hình SVM}{9}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Khái niệm}{9}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Siêu phẳng phân tách}{9}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Khoảng cách từ điểm đến siêu phẳng}{10}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Margin - Lề của bộ phân loại}{11}{section.2.4}%
+\contentsline {section}{\numberline {2.5}Siêu phẳng chính tắc}{11}{section.2.5}%
+\contentsline {section}{\numberline {2.6}Bài toán tối ưu của SVM}{12}{section.2.6}%
+\contentsline {section}{\numberline {2.7}Phương pháp Lagrange và điều kiện KKT}{12}{section.2.7}%
+\contentsline {section}{\numberline {2.8}Mô hình dự đoán với SVM}{13}{section.2.8}%
+\contentsline {chapter}{\numberline {3}Dữ liệu và xây dựng, huấn luyện mô hình SVM}{14}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Dữ liệu sử dụng}{14}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Xây dựng mô hình SVM}{15}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Lựa chọn mô hình}{15}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Thiết lập mô hình SVM tuyến tính}{16}{subsection.3.2.2}%
+\contentsline {section}{\numberline {3.3}Quy trình huấn luyện mô hình}{16}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Nạp dữ liệu}{17}{subsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.3.2}Tách dữ liệu đầu vào và nhãn}{17}{subsection.3.3.2}%
+\contentsline {subsection}{\numberline {3.3.3}Khởi tạo mô hình}{18}{subsection.3.3.3}%
+\contentsline {subsection}{\numberline {3.3.4}Huấn luyện mô hình}{18}{subsection.3.3.4}%
+\contentsline {subsection}{\numberline {3.3.5}Lưu mô hình sau khi huấn luyện}{19}{subsection.3.3.5}%
+\contentsline {section}{\numberline {3.4}Mô hình phân loại ba lớp}{19}{section.3.4}%
+\contentsline {section}{\numberline {3.5}Kết quả đầu ra của mô hình}{20}{section.3.5}%
+\contentsline {chapter}{\numberline {4}Triển khai trực tuyến và vận hành}{21}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Các công nghệ sử dụng}{21}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Quy trình triển khai}{22}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Đóng gói và triển khai mô hình}{22}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Kiểm thử API}{22}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Triển khai trên Render}{23}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.4}Kết nối giao diện Web với API}{23}{subsection.4.2.4}%
+\contentsline {section}{\numberline {4.3}Vận hành hệ thống}{24}{section.4.3}%
+\contentsline {chapter}{\numberline {5}Nâng cấp mô hình}{25}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Tổng quan nâng cấp}{25}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Nâng cấp mô hình SVM}{26}{section.5.2}%
+\contentsline {subsection}{\numberline {5.2.1}Sử dụng nhiều kernel}{26}{subsection.5.2.1}%
+\contentsline {subsection}{\numberline {5.2.2}Linear Kernel}{26}{subsection.5.2.2}%
+\contentsline {subsection}{\numberline {5.2.3}Polynomial Kernel}{27}{subsection.5.2.3}%
+\contentsline {subsection}{\numberline {5.2.4}RBF Kernel}{27}{subsection.5.2.4}%
+\contentsline {subsection}{\numberline {5.2.5}Sigmoid Kernel}{27}{subsection.5.2.5}%
+\contentsline {section}{\numberline {5.3}Huấn luyện và lựa chọn mô hình}{28}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Đánh giá các mô hình SVM}{28}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Kết nối cơ sở dữ liệu Supabase}{32}{section.5.5}%
+\contentsline {subsection}{\numberline {5.5.1}Mục đích sử dụng Supabase}{32}{subsection.5.5.1}%
+\contentsline {subsection}{\numberline {5.5.2}Quy trình lưu trữ dữ liệu}{32}{subsection.5.5.2}%
+\contentsline {section}{\numberline {5.6}Mở rộng chức năng lịch sử}{33}{section.5.6}%
+\contentsline {chapter}{\numberline {6}DEMO WEB VÀ HƯỚNG DẪN SỬ DỤNG}{34}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Giới thiệu giao diện Web}{34}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Demo trang Web}{35}{section.6.2}%
+\contentsline {subsection}{\numberline {6.2.1}Đăng kí và đăng nhập}{35}{subsection.6.2.1}%
+\contentsline {subsection}{\numberline {6.2.2}Trang giới thiệu hoa Iris}{36}{subsection.6.2.2}%
+\contentsline {subsection}{\numberline {6.2.3}Trang dự đoán và biểu đồ}{37}{subsection.6.2.3}%
+\contentsline {subsection}{\numberline {6.2.4}Trang lịch sử sử dụng}{38}{subsection.6.2.4}%
+\contentsline {section}{\numberline {6.3}Hướng dẫn sử dụng chức năng dự đoán}{39}{section.6.3}%
+\contentsline {subsection}{\numberline {6.3.1}Dự đoán bằng cách nhập dữ liệu thủ công}{39}{subsection.6.3.1}%
+\contentsline {subsection}{\numberline {6.3.2}Dự đoán bằng dữ liệu ngẫu nhiên}{40}{subsection.6.3.2}%
+\contentsline {subsection}{\numberline {6.3.3}Dự đoán bằng file dữ liệu}{40}{subsection.6.3.3}%
+\contentsline {section}{\numberline {6.4}Hướng dẫn xem biểu đồ}{41}{section.6.4}%
+\contentsline {section}{\numberline {6.5}Hướng dẫn sử dụng lịch sử}{41}{section.6.5}%
+\contentsline {subsection}{\numberline {6.5.1}Xem lịch sử dự đoán}{41}{subsection.6.5.1}%
+\contentsline {subsection}{\numberline {6.5.2}Lọc lịch sử theo loại hoa}{42}{subsection.6.5.2}%
+\contentsline {subsection}{\numberline {6.5.3}So sánh các mẫu dữ liệu}{42}{subsection.6.5.3}%
+\contentsline {subsection}{\numberline {6.5.4}Xóa lịch sử và đặt lại hệ thống}{43}{subsection.6.5.4}%
+\contentsline {section}{\numberline {6.6}Các chức năng hỗ trợ}{43}{section.6.6}%
+\contentsline {section}{\numberline {6.7}Quy trình sử dụng tổng quát}{43}{section.6.7}%
+\contentsline {section}{\numberline {6.8}Kết luận chương}{44}{section.6.8}%

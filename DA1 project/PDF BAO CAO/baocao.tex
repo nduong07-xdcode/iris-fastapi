@@ -1,0 +1,1318 @@
+\documentclass[12pt,a4paper]{report}
+\usepackage{mathptmx}
+\usepackage[T5]{fontenc}
+\usepackage[vietnamese]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[fontsize=14pt]{scrextend}
+\usepackage[paperheight=29.7cm, paperwidth=21cm, right=2cm, left=3cm, top=2cm, bottom=2.5cm]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{amsmath, amsfonts, amssymb}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{titlesec}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{placeins}
+\usepackage{needspace}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{shapes, arrows, positioning}
+\linespread{1.5}
+\usepackage{graphicx}
+\usepackage{float}
+
+
+
+
+\lstset{
+	language=Python,
+	basicstyle=\ttfamily\small,
+	keywordstyle=\color{blue},
+	commentstyle=\color{teal},
+	stringstyle=\color{red!70!black},
+	showstringspaces=false,
+	frame=single,
+	rulecolor=\color{black!40},
+	breaklines=true,
+	tabsize=4
+}
+
+
+\lstset{
+	language=Python,
+	basicstyle=\ttfamily\small,
+	keywordstyle=\color{blue},
+	stringstyle=\color{orange},
+	commentstyle=\color{green!50!black},
+	numbers=left,
+	numberstyle=\tiny,
+	stepnumber=1,
+	breaklines=true,
+	frame=single,
+}
+
+
+
+
+\addto\captionsvietnamese{
+	\renewcommand{\contentsname}{\centering \Large \textbf{MỤC LỤC}}
+}
+
+\begin{document}
+	
+	
+	\begin{titlepage}
+		
+		\begin{center}
+			\vspace{0.25cm}
+			\noindent \textbf{\large{ĐẠI HỌC ĐÀ NẴNG \\ TRƯỜNG ĐẠI HỌC SƯ PHẠM\\ KHOA TOÁN - TIN}}\\
+			\vspace{0.25cm}
+			
+			
+			
+			\begin{center}
+				\includegraphics[width=0.3\textwidth]{"C:/Users/user/OneDrive/Pictures/logokhoa.jpg"}
+				
+			\end{center}
+			
+			
+			
+			
+			{\Large \textbf{BÁO CÁO GIỮA KÌ} \par}
+			\vspace{1.0cm}
+			
+			{\large \textbf{CHỦ ĐỀ:} \\[0.3cm]
+				\underline{\textbf{MÔ HÌNH SVM NHẬN DIỆN HOA IRIS}} \\ \vspace{0.3cm} \underline{\textbf{}} \par}
+			\vspace{1.0cm}
+			
+			\begin{center}
+				{\Large
+					\begin{tabular}{l l}
+						\textbf{Giáo viên hướng dẫn} & : TS. Phan Trần Đức Minh \\
+						\textbf{Sinh viên thực hiện} & : Đoàn Nguyễn Dương \\
+						\textbf{MSSV} & : 3110524008 \\
+						\textbf{Học phần}               & : Học máy nâng cao \\					
+						\textbf{Lớp}                 & : 24CKDL \\
+				\end{tabular}}
+			\end{center}
+			
+			
+			\vfill
+			
+			{\large \textit{Đà Nẵng, ngày 20 tháng 9 năm 2026}}
+			
+			
+			
+		\end{center}
+	\end{titlepage}
+	
+	
+	\tableofcontents
+	\newpage
+	\chapter*{\centering \large LỜI CẢM ƠN}
+	\addcontentsline{toc}{chapter}{LỜI CẢM ƠN}
+	\noindent
+	
+	Đầu tiên, em xin gửi lời cảm ơn chân thành đến Trường Đại học Sư Phạm – Đại học Đà Nẵng đã đưa môn học \textbf{Thực tập nhận thức} vào chương trình giảng dạy. Đặc biệt, em xin gửi lời cảm ơn sâu sắc đến giảng viên bộ môn – Thầy Nguyễn Lê Trâm đã dạy dỗ, truyền đạt những kiến thức quý báu cho em trong suốt thời gian học tập vừa qua. Trong thời gian tham gia khóa thực tập của thầy, em đã có thêm cho mình nhiều kiến thức bổ ích, tinh thần học tập hiệu quả, nghiêm túc. Đây chắc chắn sẽ là những kiến thức quý báu,  là hành trang để em có thể vững bước trên con đường học vấn sau này.\\
+	\noindent
+	
+	Tuy em  đã rất tâm huyết với bài tiểu luận này nhưng chắc chắn bài tiểu luận khó có thể tránh khỏi những thiếu sót và nhiều chỗ còn chưa chính xác, kính mong thầy xem xét và góp ý để bài tiểu luận của em được hoàn thiện hơn. \\
+	\noindent
+	
+	Em xin gửi lời cảm ơn chân thành đến thầy vì sự tận tụy trong giảng dạy, cùng những kiến thức và kinh nghiệm thực tế mà thầy đã truyền đạt. Những điều đó đã giúp em có thêm nền tảng vững chắc cho con đường học tập và nghề nghiệp sau này.
+	Kính chúc thầy luôn dồi dào sức khỏe, nhiều niềm vui và thành công trên hành trình sự nghiệp của mình.\\
+	
+	Em xin chân thành cảm ơn!
+	
+	
+	\newpage
+	\chapter*{\centering \large LỜI MỞ ĐẦU}
+	\addcontentsline{toc}{chapter}{LỜI MỞ ĐẦU}
+	
+	Thực tập nhận thức là một hoạt động quan trọng giúp sinh viên tiếp cận môi trường làm việc thực tế, mở rộng kiến thức chuyên môn và định hướng nghề nghiệp trong tương lai. Thông qua chương trình thực tập nhận thức tại tỉnh Bình Định, em đã có cơ hội tham quan và tìm hiểu tại Công ty TMA Solutions Bình Định, Trung tâm Khám phá Khoa học và Đổi mới sáng tạo Quy Nhơn, cùng Trung tâm Quốc tế Khoa học và Giáo dục liên ngành (ICISE).
+	
+	Những chuyến tham quan đã giúp em hiểu rõ hơn về môi trường doanh nghiệp công nghệ, các hoạt động nghiên cứu khoa học, đổi mới sáng tạo và vai trò của khoa học công nghệ trong sự phát triển của xã hội hiện đại. Đồng thời, đây cũng là cơ hội để em học hỏi thêm nhiều kiến thức thực tiễn, nâng cao nhận thức nghề nghiệp và xác định mục tiêu học tập trong thời gian tới.
+	
+	Báo cáo này được thực hiện nhằm tổng hợp những nội dung đã tìm hiểu, những kiến thức thu nhận được cũng như những cảm nhận của bản thân sau quá trình tham gia chương trình thực tập nhận thức. Qua đó, em mong muốn ghi lại những trải nghiệm quý báu và bài học ý nghĩa đã đạt được trong suốt chuyến đi.
+	
+	Do kiến thức và kinh nghiệm còn hạn chế, báo cáo khó tránh khỏi những thiếu sót. Em rất mong nhận được sự góp ý của quý thầy cô để báo cáo được hoàn thiện hơn.
+	
+	\newpage
+	\chapter{Giới thiệu bài toán}
+	\section{Bối cảnh bài toán}
+	
+	Trong lĩnh vực học máy, bài toán phân loại là một trong những bài toán cơ bản và có nhiều ứng dụng thực tế. Mục tiêu của bài toán là xây dựng một mô hình có khả năng nhận dữ liệu đầu vào và xác định dữ liệu đó thuộc về lớp nào.
+	
+	Trong báo cáo này, bài toán được lựa chọn là phân loại hoa Iris dựa trên các đặc trưng về kích thước của đài hoa và cánh hoa.
+	
+	Tập dữ liệu Iris là một tập dữ liệu kinh điển trong Machine Learning và Statistics, được giao diện của hệ thống giới thiệu là dữ liệu do Ronald Fisher đưa ra năm 1936. Hệ thống phân loại ba nhóm hoa gồm:
+	
+	\begin{itemize}
+		\item 	Iris Setosa;
+		\item  	Iris Versicolor
+		\item 	Iris Virginica.
+	\end{itemize}
+	
+	Mục tiêu chính của bài toán là xây dựng một mô hình cho phép người dùng lựa chọn từng loài hoa để xem thông tin và đặc điểm, cũng như phân loại các loài hoa.
+	
+	\section{Mục tiêu sản phẩm}
+	
+	Sản phẩm được xây dựng nhằm nghiên cứu, phát triển và triển khai một hệ thống phân loại hoa Iris dựa trên mô hình học máy Support Vector Machine (SVM). Hệ thống hướng đến việc kết hợp giữa quá trình xây dựng mô hình học máy và phát triển ứng dụng Web, qua đó hình thành một quy trình tương đối hoàn chỉnh từ huấn luyện mô hình, lưu trữ, xây dựng API đến triển khai trực tuyến và cung cấp giao diện tương tác cho người sử dụng.
+	
+	\noindent
+	Cụ thể, sản phẩm hướng đến các mục tiêu sau:
+	
+	\begin{itemize}
+		\item Xây dựng mô hình phân loại: Huấn luyện mô hình SVM trên tập dữ liệu Iris nhằm phân loại các mẫu hoa dựa trên bốn thuộc tính gồm chiều dài và chiều rộng của đài hoa, chiều dài và chiều rộng của cánh hoa.
+		\item Đánh giá mô hình: Kiểm tra khả năng phân loại của mô hình thông qua các phương pháp đánh giá phù hợp, từ đó xác định mức độ hiệu quả của mô hình đối với bài toán phân loại dữ liệu Iris.
+		\item 	Xây dựng hệ thống dự đoán: Tích hợp mô hình SVM đã huấn luyện vào một API sử dụng FastAPI, cho phép tiếp nhận dữ liệu đầu vào và trả về kết quả phân loại dưới dạng dữ liệu có cấu trúc.
+		\item Triển khai mô hình trực tuyến: Thực hiện quy trình đóng gói và triển khai API trên nền tảng điện toán đám mây Render, qua đó cung cấp khả năng truy cập mô hình thông qua môi trường Internet. 
+		\item Phát triển giao diện Web: Xây dựng giao diện Web cho phép người dùng nhập các thông số của mẫu hoa, gửi yêu cầu dự đoán và trực quan hóa kết quả phân loại.
+	\end{itemize}
+	
+	
+	Thông qua các mục tiêu trên, sản phẩm hướng vào việc xây dựng một mô hình phân loại, hướng đến việc minh họa quy trình triển khai một mô hình học máy trong thực tế, từ giai đoạn huấn luyện mô hình đến cung cấp dịch vụ dự đoán trực tuyến thông qua API và giao diện Web.
+	
+	
+	\chapter{Mô hình SVM}
+	
+	\section{Khái niệm}
+	
+	Mô hình Support Vector Machine (SVM) là một phương pháp học máy được sử dụng cho các bài toán phân loại. Ý tưởng chính của SVM là tìm một siêu phẳng để phân tách các lớp dữ liệu sao cho khoảng cách từ siêu phẳng đến các điểm dữ liệu gần nhất là lớn nhất.
+	
+\noindent
+	Theo tài liệu lý thuyết, với dữ liệu:
+
+	$$
+	D = \{(x_i,y_i)\}_{i=1}^{n}
+	$$
+
+\noindent
+	trong đó:
+
+	$$
+	x_i \in \mathbb{R}^{d}, \qquad y_i \in \{-1,+1\}
+	$$
+
+	nếu dữ liệu có thể phân tách tuyến tính thì tồn tại một siêu phẳng có thể chia dữ liệu thành hai phía.
+
+	\section{Siêu phẳng phân tách}
+
+	Siêu phẳng được biểu diễn bởi:
+
+	$$
+	h(x)=w^Tx+b=0
+	$$
+
+\noindent
+Trong đó:
+
+\begin{itemize}
+	\item $x$: vector đặc trưng của một mẫu dữ liệu;
+	\item $w$: vector trọng số;
+	\item $b$: hệ số lệch;
+	\item $h(x)$: hàm phân biệt.
+\end{itemize}
+
+Vector $w$ đóng vai trò là vector pháp tuyến của siêu phẳng, còn $b$
+quyết định vị trí của siêu phẳng trong không gian.
+
+\noindent
+Đối với bài toán phân loại tuyến tính, quy tắc dự đoán là:
+
+$$
+y=
+\begin{cases}
+	+1, & \text{nếu } h(x)>0,\\
+	-1, & \text{nếu } h(x)<0.
+\end{cases}
+$$
+
+Do đó, siêu phẳng:
+
+$$
+h(x)=0
+$$
+
+được xem là biên quyết định của bộ phân loại.
+
+\section{Khoảng cách từ điểm đến siêu phẳng}
+
+Khoảng cách có hướng từ một điểm $x$ đến siêu phẳng được xác định bởi:
+
+$$
+r=\frac{w^Tx+b}{\|w\|}
+$$
+
+\noindent
+Đối với dữ liệu có nhãn $y$, khoảng cách được biểu diễn:
+
+$$
+\delta=
+\frac{y(w^Tx+b)}{\|w\|}
+$$
+
+Công thức này cho phép xác định mức độ gần hay xa của một điểm dữ liệu đối với biên quyết định.
+
+
+
+
+\section{Margin - Lề của bộ phân loại}
+
+	SVM không chỉ tìm một siêu phẳng có khả năng phân chia dữ liệu mà còn tìm	siêu phẳng có lề lớn nhấ.
+
+Lề margin được xác định bằng khoảng cách nhỏ nhất từ các điểm dữ liệu đến siêu phẳng:
+
+$$
+\delta^*
+=
+\min_{x_i}
+\left\{
+\frac{y_i(w^Tx_i+b)}
+{\|w\|}
+\right\}
+$$
+
+Những điểm đạt khoảng cách nhỏ nhất này được gọi là
+các vector hỗ trợ. Các vector hỗ trợ có vai trò quan trọng vì chúng xác định vị trí của biên phân loại.
+
+\section{Siêu phẳng chính tắc}
+
+Để loại bỏ sự không duy nhất trong cách biểu diễn siêu phẳng, SVM sử dụng
+dạng chính tắc:
+
+$$
+y_i(w^Tx_i+b)\geq1
+$$
+
+với mọi điểm trong tập dữ liệu.
+
+\noindent
+Đối với các vector hỗ trợ:
+
+$$
+y_i(w^Tx_i+b)=1
+$$
+
+\noindent
+Trong khi các điểm nằm xa biên hơn thỏa mãn:
+
+$$
+y_i(w^Tx_i+b)>1
+$$
+
+Ta có, lề margin trong dạng chính tắc được xác định bởi:
+
+$$
+\delta^*=\frac{1}{\|w\|}
+$$
+
+\section{Bài toán tối ưu của SVM}
+
+Mục tiêu của mô hình SVM là cực đại hóa lề margin. Điều này tương đương với bài toán:
+
+$$
+\min_{w,b}
+\frac{1}{2}\|w\|^2
+$$
+
+với ràng buộc:
+
+$$
+y_i(w^Tx_i+b)\geq1
+$$
+
+\noindent
+Đây là bài toán tối ưu lồi với các ràng buộc tuyến tính.
+
+\section{Phương pháp Lagrange và điều kiện KKT}
+
+Để giải bài toán SVM, ta sử dụng phương pháp
+{nhân tử Lagrange} và điều kiện
+ (KKT).
+
+\noindent
+Các nhân tử Lagrange được ký hiệu:
+
+$$
+\alpha_i\geq0
+$$
+
+\noindent
+Điều kiện KKT quan trọng:
+
+$$
+\alpha_i
+\left[
+y_i(w^Tx_i+b)-1
+\right]=0
+$$
+
+Điều kiện này thể hiện mối quan hệ giữa các nhân tử Lagrange và các ràng buộc lề margin.
+
+\noindent
+Bài toán đối ngẫu của SVM có thể được đưa về dạng quy hoạch toàn phương:
+
+$$
+\min_\alpha
+\left\{
+\frac{1}{2}\alpha^TQ\alpha-\mathbf{1}^T\alpha
+:
+\alpha\geq0,\;
+y^T\alpha=0
+\right\}
+$$
+
+với:
+
+$$
+Q_{ij}=y_iy_jx_i^Tx_j
+$$
+
+và gradient:
+
+$$
+g(\alpha)=Q\alpha-\mathbf{1}
+$$
+
+\section{Mô hình dự đoán với SVM}
+
+Sau khi tìm được $w$ và $b$, với một mẫu mới $z$, nhãn dự đoán được xác định
+bằng:
+
+$$
+\hat{y}=\operatorname{sign}(w^Tz+b)
+$$
+
+Đây chính là nguyên tắc sử dụng siêu phẳng quyết định để phân loại dữ liệu mới.
+
+Trong sản phẩm, mô hình được sử dụng để phân loại dữ liệu Iris thành ba lớp Setosa, Versicolor và Virginica.
+
+
+
+
+		\chapter{Dữ liệu và xây dựng, huấn luyện mô hình SVM}
+		
+		\section{Dữ liệu sử dụng}
+		
+		Trong sản phẩm, tập dữ liệu được sử dụng là tập dữ liệu hoa Iris, một tập dữ liệu kinh điển trong lĩnh vực học máy và thống kê. Tập dữ liệu gồm ba lớp hoa
+		Iris là Iris Setosa, Iris Versicolor và Iris Virginica.
+		
+		\noindent
+		Mỗi mẫu dữ liệu được mô tả bởi bốn thuộc tính đo lường, bao gồm:
+		
+		\begin{itemize}
+			\item Chiều dài đài hoa (Sepal Length);
+			\item Chiều rộng đài hoa (Sepal Width);
+			\item Chiều dài cánh hoa (Petal Length);
+			\item Chiều rộng cánh hoa (Petal Width).
+		\end{itemize}
+		
+		Các thuộc tính trên được sử dụng làm các biến đầu vào cho mô hình SVM. Trong
+		hệ thống, bốn thuộc tính này lần lượt được biểu diễn bởi các trường
+		\texttt{sepal.length}, \texttt{sepal.width}, \texttt{petal.length} và
+		\texttt{petal.width}.
+		
+		Có thể biểu diễn một mẫu dữ liệu dưới dạng vector đặc trưng:
+		
+		$$
+		x=
+		\left[
+		x_1,x_2,x_3,x_4
+		\right]^T
+		$$
+		
+		trong đó $x_1$, $x_2$, $x_3$ và $x_4$ tương ứng với chiều dài đài hoa, chiều rộng đài hoa, chiều dài cánh hoa và chiều rộng cánh hoa.
+		
+		\noindent
+		Nhãn đầu ra của bài toán thuộc một trong ba lớp:
+		
+		$$
+		y\in
+		\{
+		\text{Setosa},
+		\text{Versicolor},
+		\text{Virginica}
+		\}
+		$$
+		
+		Mục tiêu của mô hình là học mối quan hệ giữa bốn thuộc tính đầu vào và nhãn	của mẫu hoa, từ đó có thể dự đoán lớp của một mẫu mới.
+		
+		
+		
+		\section{Xây dựng mô hình SVM}
+		
+		\subsection{Lựa chọn mô hình}
+		
+		Mô hình được lựa chọn trong sản phẩm là Support Vector Machine (SVM). Theo lý thuyết, SVM xây dựng một siêu phẳng phân tách các lớp dữ liệu dựa trên nguyên tắc cực đại hóa lề margin.
+		
+		\noindent
+		Đối với trường hợp tuyến tính, siêu phẳng được biểu diễn bởi:
+		
+		$$
+		h(x)=w^Tx+b
+		$$
+		
+		và bài toán tối ưu có dạng:
+		
+		$$
+		\min_{w,b}
+		\frac{1}{2}\|w\|^2
+		$$
+		
+		với ràng buộc:
+		
+		$$
+		y_i(w^Tx_i+b)\geq1
+		$$
+		
+		Trong sản phẩm, mô hình được xây dựng bằng thư viện học máy
+		\texttt{scikit-learn}. Lựa chọn này cho phép triển khai mô hình SVM tuyến tính	trên tập dữ liệu Iris và sau đó tích hợp mô hình vào hệ thống dự đoán trực
+		tuyến.
+		
+		\subsection{Thiết lập mô hình SVM tuyến tính}
+		
+		Mô hình SVM được thiết lập với kernel tuyến tính. Kernel được lựa chọn là
+		\texttt{"linear"}, phù hợp với mục tiêu xây dựng mô hình SVM tuyến tính theo	phần lý thuyết đã trình bày.
+		
+		\noindent
+		Về mặt triển khai, mô hình có thể được khởi tạo bằng:
+		
+\[
+	SVC(kernel="linear")
+\]
+		
+		Trong đó, tham số \texttt{kernel ="linear"} xác định việc sử dụng hàm kernel tuyến tính cho mô hình SVM.
+		
+		Sau khi khởi tạo, mô hình được huấn luyện dựa trên tập đặc trưng đầu vào $X$
+		và vector nhãn $y$.
+		
+		\section{Quy trình huấn luyện mô hình}
+		
+		Quy trình xây dựng mô hình SVM trong sản phẩm được thực hiện theo các bước chính sau:
+		
+		\begin{enumerate}
+			\item Nạp tập dữ liệu Iris;
+			\item Tách các đặc trưng đầu vào và nhãn;
+			\item Khởi tạo mô hình SVM với kernel tuyến tính;
+			\item Huấn luyện mô hình trên dữ liệu;
+			\item Lưu mô hình sau khi huấn luyện;
+			\item Sử dụng mô hình đã lưu cho quá trình dự đoán.
+		\end{enumerate}
+		
+		\subsection{Nạp dữ liệu}
+		
+		Tập dữ liệu Iris được nạp thông qua module \texttt{datasets} của \texttt{scikit-learn}. Sau khi nạp dữ liệu, các thuộc tính đầu vào được lưu
+		trong biến $X$ và nhãn tương ứng được lưu trong biến $y$.
+		
+		Có thể biểu diễn dữ liệu đầu vào dưới dạng:
+		
+		$$
+		X=
+		\begin{bmatrix}
+			x_1^T\\
+			x_2^T\\
+			\vdots\\
+			x_n^T
+		\end{bmatrix}
+		$$
+		
+		trong đó mỗi hàng tương ứng với một mẫu hoa và mỗi cột tương ứng với một thuộc tính của mẫu.
+		
+		Vector nhãn được biểu diễn:
+		
+		$$
+		y=
+		\begin{bmatrix}
+			y_1\\
+			y_2\\
+			\vdots\\
+			y_n
+		\end{bmatrix}
+		$$
+		
+		Trong đó mỗi $y_i$ biểu thị lớp tương ứng của mẫu $x_i$.
+		
+		\subsection{Tách dữ liệu đầu vào và nhãn}
+		
+		Sau khi nạp dữ liệu, các đặc trưng được sử dụng làm dữ liệu đầu vào $X$, còn nhãn loài hoa được sử dụng làm biến mục tiêu $y$.
+		
+		\noindent
+		Trong chương trình huấn luyện, quá trình này được thực hiện thông qua:
+		
+	\[
+			X = iris.data		
+	\]
+		
+	\[
+			y = iris.target
+	\]
+		Như vậy, mô hình nhận bốn đặc trưng đo lường của mỗi mẫu làm đầu vào và sử dụng nhãn loài hoa làm đầu ra cần dự đoán.
+		
+		\subsection{Khởi tạo mô hình}
+		
+		Sau khi xác định dữ liệu đầu vào và nhãn, mô hình SVM tuyến tính được khởi tạo
+		bằng:
+		
+		
+		\[
+		model = SVC(kernel="linear")
+		\]
+
+		
+		Ở bước này, mô hình mới chỉ được khởi tạo và chưa học được mối quan hệ giữa các đặc trưng và nhãn.
+		
+		\subsection{Huấn luyện mô hình}
+		
+		Mô hình được huấn luyện thông qua phương thức:
+		
+	\[
+			model.fit(X, y)
+	\]
+		
+		Trong quá trình này, thuật toán SVM sử dụng các mẫu dữ liệu trong $X$ cùng nhãn tương ứng trong $y$ để xác định mô hình phân loại.
+		
+		Về mặt lý thuyết, đối với bài toán SVM tuyến tính, quá trình huấn luyện hướng đến việc xác định siêu phẳng có lề margin lớn nhất. Với dạng chính tắc, bài toán được biểu diễn bởi:
+		
+		$$
+		\min_{w,b}
+		\frac{1}{2}\|w\|^2
+		$$
+		
+		với:
+		
+		$$
+		y_i(w^Tx_i+b)\geq1
+		$$
+		
+		Các điểm dữ liệu nằm trên lề margin đóng vai trò là các vector hỗ trợ.
+		Chúng có ảnh hưởng trực tiếp đến việc xác định siêu phẳng phân tách tối ưu.
+		
+		\subsection{Lưu mô hình sau khi huấn luyện}
+		
+		Sau khi hoàn thành quá trình huấn luyện, mô hình được lưu lại để sử dụng trong hệ thống dự đoán.
+		
+		Mô hình được lưu dưới dạng tệp:
+		
+		\begin{verbatim}
+			svm_model.pkl
+		\end{verbatim}
+		
+		Việc lưu mô hình giúp hệ thống không cần thực hiện lại quá trình huấn luyện mỗi khi có một yêu cầu dự đoán mới. Thay vào đó, mô hình đã huấn luyện được
+		nạp trực tiếp vào ứng dụng FastAPI và sử dụng để thực hiện dự đoán.
+		
+		
+		
+		\section{Mô hình phân loại ba lớp}
+		
+		Khác với phần lý thuyết SVM cơ bản được trình bày với hai lớp
+		$y_i\in{-1,+1}$, bài toán trong sản phẩm là bài toán phân loại ba lớp gồm
+		Setosa, Versicolor và Virginica.
+		
+		Mô hình  \texttt{scikit-learn} xử lý bài toán nhiều lớp trong quá trình huấn luyện. Sau khi dự đoán, kết quả lớp được biểu diễn dưới dạng mã số và được ánh xạ thành tên loài tương ứng trong hệ thống.
+		
+		\noindent
+		Ba lớp được ánh xạ lần lượt là:
+		
+		$$
+		0\rightarrow\text{Setosa}
+		$$
+		
+		$$
+		1\rightarrow\text{Versicolor}
+		$$
+		
+		$$
+		2\rightarrow\text{Virginica}
+		$$
+		
+		Kết quả dự đoán cuối cùng được trả về dưới dạng tên loài để giao diện Web có thể hiển thị trực tiếp cho người sử dụng.
+		
+		\section{Kết quả đầu ra của mô hình}
+		
+		Sau khi mô hình được huấn luyện và lưu trữ, mô hình có thể nhận một mẫu dữ liệu	mới gồm bốn giá trị:
+		
+		$$
+		x=
+		\left[
+		\text{sepal\_length},
+		\text{sepal\_width},
+		\text{petal\_length},
+		\text{petal\_width}
+		\right]^T
+		$$
+		
+		và trả về lớp dự đoán tương ứng.
+		
+		Trong hệ thống Web, dữ liệu được gửi đến API dưới dạng JSON gồm bốn trường trên. API thực hiện dự đoán bằng mô hình SVM đã được huấn luyện và trả về kết
+		quả gồm mã lớp và tên lớp dự đoán. Cách thức gửi dữ liệu này được thể hiện trực tiếp trong mã JavaScript của giao diện.
+		
+		\noindent
+		Như vậy, quy trình xây dựng mô hình có thể được khái quát:
+		
+		$$
+		\text{Dữ liệu}
+		\rightarrow
+		\text{Tách }X,y
+		\rightarrow
+		\text{Khởi tạo model SVM }
+		\rightarrow
+		\text{Huấn luyện}
+		\rightarrow
+		\text{Lưu model}
+		$$
+		
+		Mô hình sau khi được lưu sẽ là thành phần cốt lõi được sử dụng trong bước triển khai API và xây dựng hệ thống dự đoán trực tuyến.
+	
+	\chapter{Triển khai trực tuyến và vận hành}	
+	
+	\section{Các công nghệ sử dụng}
+	
+	Sản phẩm sử dụng các công nghệ sau để vận hành:
+	
+	
+	\begin{table}[H]
+		\centering
+		\label{tab:congnghe}
+		\begin{tabular}{|p{6.2cm}|p{6.2cm}|}
+			\hline
+			\textbf{Công nghệ} & \textbf{Vai trò} \\  
+			\hline
+			
+			Python 
+			& Ngôn ngữ lập trình chính. \\
+			\hline
+		
+			
+			Scikit-learn
+			& Xây dựng và huấn luyện mô hình SVM \\
+			\hline
+			
+		
+			
+			FastAPI
+			& Xây dựng REST API \\
+			\hline
+			
+			
+			Joblib
+			& Lưu và tải mô hình \\
+			\hline
+			
+			Swagger
+			& UI	Kiểm thử API \\
+			\hline
+
+			
+			HTML/CSS
+			& Xây dựng giao diện Web \\		
+			\hline
+			
+			JavaScript
+			& Xử lý tương tác và gọi API \\
+			\hline
+			
+			Chart.js
+			& Trực quan hóa dữ liệu\\
+			\hline
+				
+			GitHub
+			& Quản lý và lưu trữ mã nguồn \\
+			\hline
+			
+			Render
+			& Triển khai trực tuyến \\		
+			\hline
+		\end{tabular}
+	\end{table}
+	
+	
+	\section{Quy trình triển khai}
+
+	
+	Sau khi hoàn thành quá trình xây dựng và huấn luyện mô hình SVM, mô hình được triển khai dưới dạng một API trực tuyến bằng FastAPI. Mã nguồn được lưu trữ trên GitHub và triển khai trên nền tảng Render. Giao diện Web sau đó được kết nối với API để người dùng có thể nhập dữ liệu và nhận kết quả dự đoán.
+	
+	\noindent
+	Quy trình triển khai được thực hiện theo các bước chính:
+	
+	$$
+	\text{Huấn luyện SVM}
+	\rightarrow
+	\text{FastAPI}
+	\rightarrow
+	\text{GitHub}
+	$$
+	$$
+	\rightarrow
+	\text{Render}
+	\rightarrow
+	\text{API trực tuyến}
+	\rightarrow
+	\text{Giao diện Web}
+	$$
+	
+	\subsection{Đóng gói và triển khai mô hình}
+	
+	Mô hình SVM sau khi huấn luyện được lưu thành tệp \texttt{svm.model.pkl}. FastAPI được sử dụng để xây dựng API và cung cấp Endpoint \texttt{predict} phục vụ dự đoán.
+	
+	Các tệp chính của dự án gồm:
+	
+	\begin{lstlisting}
+.FastAPI/
+	|-- train.py
+	|-- app.py
+	|-- svm_model.pkl
+	|-- requirements.txt
+	|-- Procfile
+	`-- render.yaml
+	\end{lstlisting}
+	
+	Trong đó, \texttt{requirements.txt} chứa các thư viện cần thiết cho hệ thống, còn \texttt{Procfile} và \texttt{render.yaml} hỗ trợ quá trình triển khai trên Render.
+	
+	\subsection{Kiểm thử API}
+	
+	Trước khi triển khai trực tuyến, API được kiểm thử trên môi trường cục bộ bằng Uvicorn và Swagger UI. Các endpoint chính được kiểm tra gồm:
+	
+	\begin{itemize}
+		\item \texttt{/}: kiểm tra API có hoạt động hay không.
+		\item \texttt{/health}: kiểm tra trạng thái của hệ thống.
+		\item \texttt{/predict}: thực hiện dự đoán mẫu hoa Iris.
+	\end{itemize}
+	
+	Sau khi API hoạt động ổn định, mã nguồn được đưa lên GitHub để phục vụ quá trình triển khai trực tuyến.
+	
+	\subsection{Triển khai trên Render}
+	
+	Render được sử dụng để triển khai FastAPI thành một Web Service có thể truy cập thông qua Internet. Render lấy mã nguồn từ repository GitHub, cài đặt các thư viện cần thiết và khởi động ứng dụng bằng Uvicorn.
+	
+	Sau khi triển khai thành công, hệ thống được cung cấp một địa chỉ URL công khai. Người dùng hoặc giao diện Web có thể gửi yêu cầu đến endpoint \texttt{/predict} thông qua địa chỉ này.
+	
+	\subsection{Kết nối giao diện Web với API}
+	
+	Giao diện Web được xây dựng bằng HTML, CSS và JavaScript. Khi người dùng nhập bốn thông số của mẫu hoa Iris và thực hiện dự đoán, JavaScript gửi dữ liệu đến API bằng phương thức HTTP POST.
+	
+	\noindent
+	Quy trình xử lý được mô tả như sau:
+	$$
+	\text{Người dùng nhập dữ liệu}
+	\rightarrow
+	\text{Giao diện Web}
+	\rightarrow
+	\text{API FastAPI}
+	$$
+	$$
+	\rightarrow
+	\text{Mô hình SVM}
+	\rightarrow
+	\text{Kết quả dự đoán}
+	$$
+	
+	Kết quả trả về từ API được giao diện Web xử lý và hiển thị cho người dùng dưới dạng tên loài hoa và các thông tin liên quan.
+	
+	\section{Vận hành hệ thống}
+	
+	Sau khi triển khai, hệ thống hoạt động theo mô hình client--server. Người dùng tương tác với giao diện Web, trong khi mô hình SVM được lưu trữ và thực thi ở phía máy chủ thông qua FastAPI.
+	
+	Trong quá trình vận hành, hệ thống có thể được kiểm tra thông qua endpoint \texttt{/health}. Khi xảy ra lỗi, có thể kiểm tra log của dịch vụ để xác định nguyên nhân, chẳng hạn như thiếu thư viện, lỗi kết nối API hoặc lỗi trong quá trình tải mô hình.
+	
+	Nhờ cách tổ chức này, mô hình SVM có thể được sử dụng trực tuyến mà không cần chạy trực tiếp chương trình huấn luyện trên thiết bị của người dùng.
+	
+	\chapter{Nâng cấp mô hình}
+	
+	\section{Tổng quan nâng cấp}
+
+	Sau khi hoàn thiện phiên bản ban đầu sử dụng mô hình Support Vector Machine  với kernel tuyến tính(linear), hệ thống được tiếp tục nâng cấp nhằm tăng khả năng thử nghiệm mô hình và mở rộng chức năng lưu trữ dữ liệu. Phiên bản mới sử dụng nhiều kernel khác nhau của SVM, đồng thời kết nối với hệ quản trị cơ sở dữ liệu Supabase để lưu trữ thông tin dự đoán và lịch sử sử dụng.
+	
+	\noindent
+	Các thay đổi chính của hệ thống gồm:
+	
+	\begin{itemize}
+		\item Bổ sung nhiều kernel cho mô hình SVM.
+		\item Cho phép thử nghiệm và so sánh kết quả giữa các kernel.
+		\item Kết nối hệ thống với Supabase để lưu trữ dữ liệu.
+		\item Lưu trữ lịch sử dự đoán thay vì chỉ lưu trên trình duyệt.
+		\item Mở rộng các chức năng quản lý và tra cứu dữ liệu.
+		\item Cải thiện khả năng vận hành và mở rộng hệ thống.
+	\end{itemize}
+	
+
+	\section{Nâng cấp mô hình SVM}
+	
+	\subsection{Sử dụng nhiều kernel}
+	
+	Ở phiên bản ban đầu, hệ thống sử dụng SVM với kernel tuyến tính. Trong phiên bản nâng cấp, mô hình được mở rộng để sử dụng bốn loại kernel khác nhau nhằm đánh giá khả năng phân loại của SVM trên cùng một bộ dữ liệu.
+	
+	\noindent
+	Các kernel được sử dụng gồm:
+	
+	\begin{enumerate}
+		\item Linear Kernel.
+		\item Polynomial Kernel.
+		\item Radial Basis Function (RBF) Kernel.
+		\item Sigmoid Kernel.
+	\end{enumerate}
+	
+	Việc sử dụng nhiều kernel cho phép hệ thống thực hiện quá trình huấn luyện với các cách biến đổi không gian đặc trưng khác nhau. Từ đó, người dùng có thể thử nghiệm và đánh giá mô hình dựa trên kết quả phân loại thực tế.
+	
+	\subsection{Linear Kernel}
+	
+	Linear Kernel là kernel được sử dụng trong phiên bản ban đầu của hệ thống. Kernel này phù hợp với các trường hợp dữ liệu có thể được phân tách tương đối tốt bằng một siêu phẳng tuyến tính.
+	
+	\noindent
+	Trong thư viện Scikit-learn, mô hình có thể được thiết lập bằng:
+	
+	\begin{lstlisting}[language=Python]
+		SVC(kernel="linear")
+	\end{lstlisting}
+	
+	Sau khi huấn luyện, mô hình được sử dụng để dự đoán nhãn của các mẫu dữ liệu Iris.
+	
+	\subsection{Polynomial Kernel}
+	
+	Polynomial Kernel cho phép mô hình xây dựng ranh giới phân loại có dạng đa thức. Kernel này có thể được sử dụng khi mối quan hệ giữa các đặc trưng không hoàn toàn tuyến tính.
+	
+	\noindent
+	Mô hình được thiết lập với:
+	
+	\begin{lstlisting}[language=Python]
+		SVC(kernel="poly")
+	\end{lstlisting}
+	
+	Tham số của kernel có thể được điều chỉnh trong quá trình thử nghiệm để khảo sát ảnh hưởng của bậc đa thức đến kết quả phân loại.
+	
+	\subsection{RBF Kernel}
+	
+	RBF Kernel là một kernel phổ biến trong SVM, cho phép mô hình xây dựng ranh giới phân loại phi tuyến. Kernel này phù hợp với những trường hợp dữ liệu không thể phân tách hiệu quả bằng một siêu phẳng tuyến tính.
+	
+	\noindent
+	Trong Scikit-learn, mô hình được thiết lập bằng:
+	
+	\begin{lstlisting}[language=Python]
+		SVC(kernel="rbf")
+	\end{lstlisting}
+	
+	RBF Kernel sử dụng các tham số như $C$ và $\gamma$ để điều chỉnh mô hình. Trong đó, $C$ liên quan đến mức độ phạt đối với các mẫu bị phân loại sai, còn $\gamma$ ảnh hưởng đến phạm vi tác động của từng mẫu dữ liệu.
+	
+	\subsection{Sigmoid Kernel}
+	
+	Sigmoid Kernel là một lựa chọn khác của SVM, dựa trên hàm sigmoid để biến đổi dữ liệu trong quá trình phân loại.
+	
+	\noindent
+	Mô hình được thiết lập bằng:
+	
+	\begin{lstlisting}[language=Python]
+		SVC(kernel="sigmoid")
+	\end{lstlisting}
+	
+	Kernel này được đưa vào hệ thống nhằm mở rộng phạm vi thử nghiệm và so sánh giữa các phương pháp xây dựng ranh giới phân loại khác nhau.
+	
+	\section{Huấn luyện và lựa chọn mô hình}
+	
+	Sau khi bổ sung bốn kernel, quy trình huấn luyện được mở rộng. Với mỗi kernel, dữ liệu Iris được đưa vào quá trình huấn luyện và mô hình được đánh giá dựa trên kết quả phân loại.
+	
+	\noindent
+	Quy trình thực hiện gồm các bước:
+	
+	\begin{enumerate}
+		\item Chuẩn bị bộ dữ liệu Iris.
+		\item Chia dữ liệu thành tập huấn luyện và tập kiểm tra.
+		\item Khởi tạo mô hình SVM với kernel tương ứng.
+		\item Huấn luyện mô hình trên tập dữ liệu huấn luyện.
+		\item Thực hiện dự đoán trên tập kiểm tra.
+		\item Tính toán các chỉ số đánh giá.
+		\item So sánh kết quả giữa các kernel.
+		\item Lựa chọn mô hình phù hợp để sử dụng trong hệ thống.
+	\end{enumerate}
+	
+	Việc thử nghiệm nhiều kernel giúp quá trình xây dựng hệ thống không phụ thuộc vào một cấu hình SVM duy nhất. Các kết quả đánh giá có thể được sử dụng để lựa chọn mô hình phục vụ chức năng dự đoán trên giao diện Web.
+	
+	\section{Đánh giá các mô hình SVM}
+	
+	Để đánh giá các kernel, hệ thống có thể sử dụng các chỉ số phổ biến trong bài toán phân loại như Accuracy, Precision, Recall và F1-score.
+	
+	Accuracy được xác định dựa trên tỷ lệ số mẫu được dự đoán đúng trên tổng số mẫu:
+	
+	$$
+	Accuracy =
+	\frac{\text{Số mẫu dự đoán đúng}}
+	{\text{Tổng số mẫu}}
+	$$
+	
+	Đối với bài toán phân loại hoa Iris, ngoài Accuracy, các chỉ số Precision, Recall và F1-score cũng có thể được sử dụng để đánh giá chi tiết khả năng phân loại của từng lớp.
+	
+	Kết quả đánh giá giữa các kernel được tổng hợp thành bảng chỉ số để thực hiện so sánh.
+
+	Các giá trị trong bảng được lấy từ kết quả thực nghiệm của hệ thống. Việc lựa chọn mô hình cuối cùng được thực hiện dựa trên kết quả đánh giá và yêu cầu sử dụng của ứng dụng.
+	
+		\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.9\textwidth]{"D:/DA1 project/PDF BAO CAO/bc_images/a1.jpg"}
+		\caption{Bảng đánh giá và so sánh hiệu năng mô hình}
+		\label{fig:a5}
+	\end{figure}
+	
+	
+	Kết quả thực nghiệm được thực hiện trên tập dữ liệu kiểm thử gồm 30 mẫu, trong đó mỗi lớp hoa \textit{setosa}, \textit{versicolor} và \textit{virginica} có 10 mẫu. Bốn mô hình SVM với các kernel khác nhau gồm Linear, RBF, Polynomial và Sigmoid được huấn luyện và đánh giá trên cùng một tập dữ liệu. Các chỉ số được sử dụng để đánh giá gồm Accuracy, Precision, Recall và F1-Score.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.9\textwidth]{"D:/DA1 project/PDF BAO CAO/bc_images/a2.jpg"}
+		\caption{Bảng báo cáo phân loại chi tiết}
+		\label{fig:a5}
+	\end{figure}
+	
+	Kernel Linear đạt kết quả cao nhất trong thực nghiệm với Accuracy, Precision, Recall và F1-Score đều đạt 100\%. Điều này có nghĩa là toàn bộ 30 mẫu trong tập kiểm thử đều được mô hình phân loại chính xác.
+	
+	
+	
+	Kết quả 100\% của kernel Linear cho thấy dữ liệu kiểm thử trong thí nghiệm này có khả năng được phân loại rất tốt bằng một ranh giới tuyến tính. Tuy nhiên, kết quả này chỉ phản ánh tập dữ liệu kiểm thử đang sử dụng và không nên được xem là bằng chứng rằng mô hình luôn đạt 100\% trên mọi dữ liệu Iris mới.
+	
+	
+	Kernel RBF và Polynomial cùng đạt $96.7\%$ trên các chỉ số đánh giá. Hai mô hình đều phân loại chính xác lớp \textit{setosa}, trong khi một số sai lệch xuất hiện giữa hai lớp \textit{versicolor} và \textit{virginica}. Với 30 mẫu kiểm thử, kết quả $96.7\%$ tương ứng với khoảng 29 mẫu được phân loại đúng.
+	
+	Kernel Sigmoid có kết quả thấp hơn đáng kể, với Accuracy $10.0\%$, Precision $5.0\%$, Recall $10.0\%$ và F1-Score $6.7\%$. Điều này cho thấy cấu hình Sigmoid được sử dụng chưa phù hợp với đặc điểm của dữ liệu Iris.
+	
+	Sự khác biệt giữa các kernel có thể được giải thích bởi một số yếu tố chính.
+	
+	\begin{itemize}
+		\item Mỗi kernel tạo ra một cách biểu diễn quan hệ giữa các mẫu dữ liệu khác nhau. Linear Kernel giả định rằng có thể xây dựng ranh giới tuyến tính để phân tách các lớp. Với dữ liệu Iris, giả định này phù hợp tương đối tốt nên mô hình đạt kết quả cao.
+		\item RBF và Polynomial có khả năng xây dựng ranh giới phi tuyến. Khả năng này hữu ích khi dữ liệu có cấu trúc phức tạp, nhưng trên bộ dữ liệu Iris, mức độ phức tạp bổ sung chưa tạo ra lợi thế so với Linear Kernel. Do đó, hai kernel này đạt kết quả thấp hơn một chút trong thực nghiệm.
+		\item hiệu quả của SVM phụ thuộc đáng kể vào việc lựa chọn các siêu tham số. Đặc biệt đối với RBF, Polynomial và Sigmoid, các tham số như $C$, $\gamma$ và các tham số riêng của từng kernel có ảnh hưởng trực tiếp đến hình dạng của ranh giới quyết định. Nếu các tham số chưa được tối ưu, mô hình có thể chưa đạt được hiệu quả tốt nhất.
+		\item  Kết quả được tính trên tập kiểm thử gồm 30 mẫu. Do số lượng mẫu kiểm thử tương đối nhỏ, chỉ một mẫu dự đoán sai cũng làm Accuracy thay đổi khoảng 3.33\%. 
+		Vì vậy,  chênh lệch giữa 100\% và 96.7\% thực tế chỉ tương ứng với một mẫu bị phân loại sai.
+		
+
+	\end{itemize}
+
+		Kết quả thực nghiệm cho thấy cả Linear, RBF và Polynomial đều có khả năng phân loại tốt trên tập dữ liệu kiểm thử hiện tại. Linear đạt kết quả 100\%, trong khi RBF và Polynomial đạt 96.7\%. Ngược lại, Sigmoid cho kết quả thấp và cần được xem xét lại về  tham số hoặc quá trình xử lý dữ liệu.
+	
+	Kết quả này cũng cho thấy việc xây dựng hệ thống hỗ trợ nhiều kernel có ý nghĩa trong quá trình thực nghiệm. Thay vì chỉ sử dụng một cấu hình SVM, hệ thống cho phép quan sát sự khác biệt giữa các kernel trên cùng một bộ dữ liệu và cùng một quy trình đánh giá.
+	
+
+	
+
+	
+	
+	
+	
+	\section{Kết nối cơ sở dữ liệu Supabase}
+	
+	\subsection{Mục đích sử dụng Supabase}
+	
+	Trong phiên bản nâng cấp, hệ thống được kết nối với Supabase nhằm đưa dữ liệu lịch sử lên cơ sở dữ liệu trực tuyến. Nhờ đó, dữ liệu có thể được lưu trữ tập trung và được truy xuất thông qua hệ thống.
+	
+	Kiến trúc lưu trữ được mở rộng như sau:
+	
+	$$
+	\text{Web}
+	\rightarrow
+	\text{FastAPI}
+	\rightarrow
+	\text{Supabase}
+	$$
+	
+	Khi người dùng thực hiện dự đoán, thông tin cần thiết được gửi đến API. Sau khi thực hiện phân loại, hệ thống có thể lưu kết quả dự đoán vào cơ sở dữ liệu Supabase.
+	
+	\subsection{Quy trình lưu trữ dữ liệu}
+	
+	Quy trình lưu trữ dữ liệu được thực hiện theo các bước:
+	
+	\begin{enumerate}
+		\item Người dùng nhập dữ liệu hoặc lựa chọn một mẫu có sẵn.
+		\item Giao diện Web gửi dữ liệu đến API.
+		\item FastAPI tiếp nhận yêu cầu.
+		\item Mô hình SVM thực hiện dự đoán.
+		\item API nhận kết quả phân loại.
+		\item Thông tin dự đoán được gửi đến Supabase.
+		\item Supabase lưu dữ liệu vào cơ sở dữ liệu.
+		\item Giao diện Web có thể truy xuất dữ liệu để hiển thị lịch sử.
+	\end{enumerate}
+	
+	Quy trình trên giúp tách biệt ba thành phần chính của hệ thống gồm giao diện người dùng, xử lý dự đoán và lưu trữ dữ liệu.
+	
+	\section{Mở rộng chức năng lịch sử}
+	
+	Việc kết nối Supabase giúp chức năng lịch sử được mở rộng so với phiên bản trước. Thay vì chỉ lưu dữ liệu trên trình duyệt, hệ thống có thể sử dụng cơ sở dữ liệu để lưu trữ các kết quả dự đoán.
+	
+	Một bản ghi lịch sử có thể bao gồm các thông tin liên quan đến:
+	
+	\begin{itemize}
+		\item Thời gian thực hiện dự đoán.
+		\item Các giá trị đầu vào của mẫu Iris.
+		\item Kết quả phân loại.
+		\item Loại kernel hoặc mô hình được sử dụng.
+		\item Các thông tin bổ sung phục vụ việc quản lý lịch sử.
+	\end{itemize}
+	
+	Dữ liệu được lưu trữ trên cơ sở dữ liệu giúp hệ thống có khả năng truy xuất và quản lý lịch sử thuận tiện hơn. Các chức năng hiển thị, lọc hoặc xóa dữ liệu có thể được thực hiện thông qua giao diện Web tùy theo thiết kế của hệ thống.
+	
+
+	
+	\chapter{DEMO WEB VÀ HƯỚNG DẪN SỬ DỤNG}
+	
+	\section{Giới thiệu giao diện Web}
+	
+	Sau khi hoàn thành quá trình xây dựng và triển khai mô hình SVM, hệ thống được tích hợp với giao diện Web nhằm cung cấp môi trường trực quan cho người dùng thực hiện dự đoán và theo dõi kết quả.
+	
+	Giao diện được xây dựng với ba khu vực chính gồm:
+	\begin{itemize}
+		\item Giới thiệu hoa Iris.
+		\item Dự đoán và biểu đồ trực quan.
+		\item Lịch sử sử dụng hệ thống.
+	\end{itemize}
+	
+	Ngoài ra, giao diện hỗ trợ chuyển đổi ngôn ngữ, thay đổi chế độ hiển thị và đặt lại trang Web. Các chức năng được tổ chức thông qua thanh điều hướng bên trái, giúp người dùng dễ dàng chuyển đổi giữa các khu vực của hệ thống. 
+	
+		\begin{figure}[H]
+		\hspace{-60pt}
+		\includegraphics[width=1.2\textwidth]{"D:/DA1 project/PDF BAO CAO/bc_images/a3.png"}
+		\caption{ Trang giới thiệu website}
+		\label{fig:a5}
+	\end{figure}
+	
+	\section{Demo trang Web}
+	\subsection{Đăng kí và đăng nhập}
+	Hệ thống cung cấp chức năng đăng ký tài khoản nhằm cho phép người dùng tạo tài khoản cá nhân trước khi sử dụng các chức năng của Web. Thông tin tài khoản được sử dụng để xác định người dùng và quản lý dữ liệu trong quá trình sử dụng hệ thống.
+	Với lần đầu tiên truy cập vào website, bạn cần đăng kí tài khoản để tiếp tục sử dụng.
+	
+	Để đăng ký tài khoản, người dùng thực hiện các bước:
+	
+	\begin{enumerate}
+		\item Chọn chức năng \textbf{Đăng ký} trên giao diện Web.
+		\item Nhập các thông tin được yêu cầu.
+		\item Kiểm tra lại thông tin đã nhập.
+		\item Nhấn nút \textbf{Đăng ký}.
+		\item Hệ thống kiểm tra thông tin và tạo tài khoản nếu dữ liệu hợp lệ.
+	\end{enumerate}
+	
+			\begin{figure}[H]
+		\centering
+		\includegraphics[width=0.9\textwidth]{"D:/DA1 project/PDF BAO CAO/bc_images/a4.png"}
+		\caption{ Trang đăng nhập website}
+		\label{fig:a5}
+	\end{figure}
+	
+	Sau khi đăng ký thành công, người dùng có thể sử dụng thông tin tài khoản để đăng nhập vào hệ thống. Hơn nữa hệ thống có thể sử dụng thông tin tài khoản để liên kết các hoạt động dự đoán và dữ liệu lịch sử với người dùng tương ứng.
+	
+	Trong phiên bản này, hệ thống sử dụng cơ sở dữ liệu Supabase để lưu trữ dữ liệu trực tuyến. Thông tin người dùng và dữ liệu phát sinh trong quá trình sử dụng có thể được liên kết thông qua tài khoản đăng nhập.
+	
+	
+	 
+	\subsection{Trang giới thiệu hoa Iris}
+	
+	Khi truy cập hệ thống, trang giới thiệu được hiển thị đầu tiên. Trang này cung cấp thông tin tổng quan về tập dữ liệu Iris và ba loại hoa gồm \textit{Iris Setosa}, \textit{Iris Versicolor} và \textit{Iris Virginica}.
+	
+	Người dùng có thể tìm hiểu đặc điểm cơ bản của từng loại hoa trước khi thực hiện chức năng dự đoán. Nội dung giới thiệu giúp người dùng có thêm thông tin để hiểu ý nghĩa của các thuộc tính được sử dụng làm dữ liệu đầu vào.
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1.0\textwidth]{"D:/DA1 project/PDF BAO CAO/bc_images/a5.png"}
+		\caption{ Trang giới thiệu các loài hoa Iris}
+		\label{fig:a5}
+	\end{figure}
+	
+	\subsection{Trang dự đoán và biểu đồ}
+	
+	Khu vực dự đoán là chức năng chính của hệ thống. Người dùng có thể nhập các thông số của một mẫu hoa Iris, sau đó chọn mô hình SVC và gửi dữ liệu đến mô hình SVM thông qua API.
+	
+	\noindent
+	Bốn thuộc tính đầu vào gồm:
+	\begin{itemize}
+		\item Chiều dài đài hoa (Sepal Length).
+		\item Chiều rộng đài hoa (Sepal Width).
+		\item Chiều dài cánh hoa (Petal Length).
+		\item Chiều rộng cánh hoa (Petal Width).
+	\end{itemize}
+
+	\noindent	
+	Bốn thuộc Kernel đầu vào gồm:
+	\begin{itemize}
+		\item Kernel Linear.
+		\item Kernel RBF.
+		\item Kernel Polynomial.
+		\item Kernel Sigmoid.
+	\end{itemize}
+	Sau khi dữ liệu được gửi, hệ thống gọi API dự đoán và hiển thị tên lớp hoa tương ứng. Kết quả đồng thời được lưu vào lịch sử sử dụng và cập nhật dữ liệu cho các biểu đồ trực quan. 
+	
+	\begin{figure}[H]
+		\centering
+		\includegraphics[width=1.0\textwidth]{"D:/DA1 project/PDF BAO CAO/bc_images/a6.jpg"}
+		\caption{ Trang dự đoán hoa}
+		\label{fig:a5}
+	\end{figure}
+	
+	\subsection{Trang lịch sử sử dụng}
+	
+	Trang lịch sử cho phép người dùng xem lại các lần dự đoán đã thực hiện. Lịch sử được chia thành hai nhóm chính:
+	\begin{itemize}
+		\item Lịch sử nhập dữ liệu thủ công.
+		\item Lịch sử dự đoán từ file dữ liệu.
+	\end{itemize}
+	
+	Mỗi bản ghi có thể hiển thị kết quả dự đoán, các thông số đầu vào và thời gian thực hiện. Đối với lịch sử tải file, hệ thống hiển thị tên file, thời gian và số lượng mẫu thuộc từng lớp. 
+	
+	\section{Hướng dẫn sử dụng chức năng dự đoán}
+	
+	\subsection{Dự đoán bằng cách nhập dữ liệu thủ công}
+	
+	Để thực hiện dự đoán một mẫu dữ liệu, người dùng thực hiện các bước:
+	
+	\begin{enumerate}
+		\item Chọn mục \textbf{Dự đoán \& Biểu đồ 2D}.
+		\item Nhập giá trị cho bốn thuộc tính của hoa Iris.
+		\item Chọn model Kernel muốn sử dụng.
+		\item Nhấn nút \textbf{Thực hiện Dự đoán}.
+		\item Chờ hệ thống xử lý và hiển thị kết quả.
+	\end{enumerate}
+	
+	Dữ liệu sau khi nhập được chuyển thành yêu cầu HTTP và gửi đến API Backend. API thực hiện dự đoán bằng mô hình SVM và trả về tên lớp hoa. Giao diện sau đó hiển thị kết quả cho người dùng. 
+	
+		\begin{figure}[H]
+		\centering
+		\includegraphics[width=1.0\textwidth]{"D:/DA1 project/PDF BAO CAO/bc_images/a7.jpg"}
+		\caption{ Kết quả dự đoán thủ công}
+		\label{fig:a5}
+	\end{figure}
+	
+	\subsection{Dự đoán bằng dữ liệu ngẫu nhiên}
+	
+	Hệ thống cung cấp chức năng \textbf{Random \& Dự đoán hàng loạt} để tạo nhiều mẫu dữ liệu và thực hiện dự đoán tự động.
+	
+	Người dùng có thể lựa chọn số lần random và thực hiện dự đoán. Chức năng này phù hợp để kiểm thử nhanh hệ thống mà không cần nhập thủ công từng mẫu dữ liệu.
+	
+		\begin{figure}[H]
+		\centering
+		\includegraphics[width=1.0\textwidth]{"D:/DA1 project/PDF BAO CAO/bc_images/a8.jpg"}
+		\caption{ Kết quả dự đoán Ramdom}
+		\label{fig:a5}
+	\end{figure}
+	Kết quả của các mẫu được hiển thị trên giao diện và có thể được sử dụng để quan sát sự phân bố kết quả dự đoán.
+	
+	\subsection{Dự đoán bằng file dữ liệu}
+	
+	Hệ thống hỗ trợ tải dữ liệu từ file có định dạng \texttt{.csv} hoặc \texttt{.txt}. Người dùng thực hiện:
+	
+	\begin{enumerate}
+		\item Chọn khu vực \textbf{Tải file lên dự đoán}.
+		\item Chọn file dữ liệu từ máy tính.
+		\item Chọn định dạng cho file dữ liệu (có nhãn hoặc không nhãn)
+		\item Nhấn nút \textbf{Gửi file và Dự đoán}.
+		\item Xem kết quả phân loại trên giao diện.
+	\end{enumerate}
+	
+	Sau khi hoàn thành, hệ thống ghi nhận thông tin của file và kết quả phân loại vào khu vực lịch sử tải file. Giao diện có thể thống kê số lượng mẫu thuộc từng lớp \textit{setosa}, \textit{versicolor} và \textit{virginica}. 
+	
+	\section{Hướng dẫn xem biểu đồ}
+	
+	Hệ thống cung cấp các biểu đồ nhằm trực quan hóa kết quả dự đoán. Trong khu vực dự đoán, người dùng có thể quan sát biểu đồ phân phối mẫu dưới dạng biểu đồ điểm 2D.
+	
+	Các điểm dữ liệu được tích lũy theo quá trình dự đoán, giúp người dùng quan sát sự phân bố của các mẫu theo từng lớp. Ngoài ra, hệ thống còn cung cấp biểu đồ thống kê phân phối số lượng các loại hoa.
+	
+	Người dùng có thể lựa chọn các thuộc tính trên trục X và trục Y để thay đổi cách biểu diễn dữ liệu. Chức năng \textbf{Xóa dữ liệu biểu đồ} được sử dụng khi muốn bắt đầu một quá trình quan sát mới. :contentReference[oaicite:7]{index=7}
+	
+	\section{Hướng dẫn sử dụng lịch sử}
+	
+	\subsection{Xem lịch sử dự đoán}
+	
+	Người dùng chọn mục \textbf{Lịch sử sử dụng} trên thanh điều hướng. Hệ thống hiển thị các kết quả đã thực hiện trước đó.
+	
+	Đối với lịch sử nhập thủ công, thông tin hiển thị gồm:
+	\begin{itemize}
+		\item Kết quả phân loại.
+		\item Các giá trị Sepal Length và Sepal Width.
+		\item Các giá trị Petal Length và Petal Width.
+		\item Thời gian thực hiện dự đoán.
+	\end{itemize}
+	
+	Đối với lịch sử tải file, hệ thống hiển thị tên file, thời gian thực hiện và số lượng mẫu thuộc từng loại hoa. :contentReference[oaicite:8]{index=8}
+	
+	\subsection{Lọc lịch sử theo loại hoa}
+	
+	Hệ thống hỗ trợ lọc lịch sử theo từng lớp gồm:
+	\begin{itemize}
+		\item Tất cả.
+		\item Iris Setosa.
+		\item Iris Versicolor.
+		\item Iris Virginica.
+	\end{itemize}
+	
+	Chức năng này giúp người dùng nhanh chóng tìm kiếm các kết quả dự đoán thuộc một lớp cụ thể.
+	
+	\subsection{So sánh các mẫu dữ liệu}
+	
+	Trong khu vực lịch sử, hệ thống hỗ trợ chế độ so sánh. Người dùng có thể chọn từ hai mẫu trở lên và thực hiện chức năng so sánh.
+	
+	Quy trình thực hiện gồm:
+	\begin{enumerate}
+		\item Bật chế độ so sánh.
+		\item Chọn các mẫu cần so sánh.
+		\item Kiểm tra số lượng mẫu đã chọn.
+		\item Nhấn \textbf{Tiến hành So sánh}.
+		\item Quan sát kết quả so sánh trên giao diện.
+	\end{enumerate}
+	
+	Chức năng này giúp người dùng đối chiếu các mẫu dữ liệu và kết quả dự đoán trong cùng một lần thao tác. :contentReference[oaicite:9]{index=9}
+	
+	\subsection{Xóa lịch sử và đặt lại hệ thống}
+	
+	Người dùng có thể sử dụng chức năng \textbf{Xóa lịch sử} để loại bỏ các dữ liệu lịch sử đã lưu.
+	
+	Ngoài ra, chức năng \textbf{Đặt lại trang Web} cho phép đưa giao diện về trạng thái ban đầu, thuận tiện khi người dùng muốn bắt đầu một phiên làm việc mới.
+	
+	\section{Các chức năng hỗ trợ}
+	
+	Bên cạnh chức năng dự đoán, hệ thống còn cung cấp một số chức năng hỗ trợ người dùng:
+	
+	\begin{itemize}
+		\item Chuyển đổi giữa tiếng Việt và tiếng Anh.
+		\item Chuyển đổi chế độ giao diện.
+		\item Thu gọn hoặc mở rộng thanh điều hướng.
+		\item Đặt lại trạng thái trang Web.
+	\end{itemize}
+	
+	Các chức năng này giúp giao diện linh hoạt hơn và thuận tiện cho quá trình sử dụng. Hệ thống hiện hỗ trợ hai ngôn ngữ tiếng Việt và tiếng Anh cho các thành phần chính trên giao diện. :contentReference[oaicite:10]{index=10}
+	
+	\section{Quy trình sử dụng tổng quát}
+	
+	Quy trình sử dụng hệ thống có thể được tóm tắt như sau:
+	
+	\[
+	\text{Truy cập Web}
+	\rightarrow
+	\text{Nhập hoặc tải dữ liệu}
+	\rightarrow
+	\text{Gửi yêu cầu dự đoán}
+	\rightarrow
+	\text{SVM phân loại}
+	\rightarrow
+	\text{Hiển thị kết quả}
+	\rightarrow
+	\text{Lưu lịch sử}
+	\rightarrow
+	\text{Trực quan hóa}
+	\]
+	
+	Đối với dữ liệu nhập thủ công, người dùng nhập bốn thuộc tính của mẫu Iris rồi thực hiện dự đoán. Đối với dữ liệu lớn hơn, người dùng có thể sử dụng chức năng random hoặc tải file để thực hiện nhiều dự đoán.
+	
+	Sau mỗi lần dự đoán, kết quả được hiển thị trên giao diện và thông tin tương ứng được ghi nhận trong lịch sử. Người dùng có thể tiếp tục thực hiện các dự đoán khác, xem biểu đồ hoặc sử dụng chức năng lọc và so sánh.
+	
+	\section{Kết luận chương}
+	
+	Chương này đã trình bày quá trình demo và hướng dẫn sử dụng hệ thống Web phân loại hoa Iris. Giao diện cung cấp các chức năng từ giới thiệu dữ liệu, nhập dữ liệu, dự đoán, tải file, trực quan hóa đến quản lý lịch sử.
+	
+	Thông qua giao diện Web, mô hình SVM được đưa vào một quy trình sử dụng trực quan, giúp người dùng có thể tương tác với mô hình mà không cần trực tiếp thực hiện các câu lệnh Python hoặc gọi API thủ công. Hệ thống đồng thời cung cấp các chức năng hỗ trợ như lọc, so sánh, xem lịch sử và thay đổi giao diện, qua đó hoàn thiện sản phẩm từ mô hình học máy thành một ứng dụng Web có khả năng sử dụng thực tế.
+	
+	
+	\newpage
+	\addcontentsline{toc}{chapter}{TÀI LIỆU THAM KHẢO}
+	\renewcommand{\bibname}{\centering \Large \textbf{TÀI LIỆU THAM KHẢO}}
+	
+	
+	
+	
+	
+	
+\end{document}

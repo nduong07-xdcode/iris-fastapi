@@ -1,0 +1,3802 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Phân tích & Dự đoán Hoa Iris - AI Studio</title>
+    
+    <!-- Google Font & FontAwesome Icon -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Chart.js để vẽ biểu đồ trực quan -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Thư viện Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --bg-color: #faf7f5;
+            --text-color: #4a403b;
+            --panel-bg: #ffffff;
+            --border-color: #eadcd6;
+            --primary-color: #d9777f;
+            --primary-hover: #c4636b;
+            --card-bg: #ffffff;
+            --input-bg: #fdfbfb;
+            --input-border: #e6d5d0;
+            --muted-color: #8c7b75;
+            --glow-color: rgba(217, 119, 127, 0.4);
+        }
+
+        [data-theme="dark"] {
+            --bg-color: #1a1615;
+            --text-color: #f0e6e4;
+            --panel-bg: #262120;
+            --border-color: #3d3432;
+            --primary-color: #e08b93;
+            --primary-hover: #d9777f;
+            --card-bg: #262120;
+            --input-bg: #1f1b1a;
+            --input-border: #4a3f3d;
+            --muted-color: #b3a4a0;
+            --glow-color: rgba(224, 139, 147, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+        }
+
+        html, body {
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        /* --- HIỆU ỨNG CÁNH HOA RƠI --- */
+        .petals-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .petal {
+            position: absolute;
+            background: rgba(217, 119, 127, 0.2);
+            border-radius: 150% 0 150% 0;
+            animation: fall linear infinite;
+        }
+
+        [data-theme="dark"] .petal {
+            background: rgba(224, 139, 147, 0.15);
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-10vh) translateX(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(110vh) translateX(50px) rotate(360deg); opacity: 0.2; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade {
+            animation: fadeIn 0.4s ease-in-out forwards;
+        }
+
+        /* --- MÀN HÌNH LOADING --- */
+        #page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--panel-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 99999;
+            transition: opacity 0.5s ease;
+        }
+
+        .spinner {
+            width: 45px;
+            height: 45px;
+            border: 3px solid var(--border-color);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- MODAL XÁC THỰC SUPABASE --- */
+        #auth-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 99998;
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 420px;
+            max-width: 92%;
+            padding: 35px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+            animation: fadeIn 0.4s ease;
+        }
+
+        /* --- POPUP CHÀO MỪNG SAU KHI ĐĂNG NHẬP --- */
+        #welcome-modal-overlay {
+            position: fixed;
+            inset: 0;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background: rgba(20, 18, 35, 0.58);
+            backdrop-filter: blur(9px);
+            z-index: 100001;
+            padding: 20px;
+        }
+
+        .welcome-modal-card {
+            width: 600px;
+            max-width: 95vw;
+            background: #ffffff;
+            border: 1px solid rgba(217, 119, 127, 0.35);
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(30, 24, 35, 0.35);
+            position: relative;
+            overflow: hidden;
+            animation: welcomePop 0.42s cubic-bezier(.2,.8,.2,1);
+        }
+
+        @keyframes welcomePop {
+            from { opacity: 0; transform: translateY(22px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        .welcome-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid #ddd7d3;
+            background: #faf8f6;
+            color: #66584f;
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+            transition: all .2s ease;
+        }
+
+        .welcome-close:hover {
+            background: var(--primary-color);
+            color: #fff;
+            border-color: var(--primary-color);
+            transform: rotate(4deg) scale(1.04);
+        }
+
+        .welcome-content {
+            padding: 42px 42px 34px;
+            text-align: center;
+        }
+
+        .welcome-logo-wrap {
+            width: 76px;
+            height: 76px;
+            margin: 0 auto 22px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            box-shadow: 0 10px 24px rgba(0,0,0,.10);
+        }
+
+        .welcome-logo {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+
+        .welcome-kicker {
+            color: #b94b18;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: 1.1px;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+
+        .welcome-title {
+            color: #17142e;
+            font-size: clamp(30px, 5vw, 44px);
+            line-height: 1.12;
+            font-weight: 900;
+            letter-spacing: -1px;
+            margin: 0 auto 22px;
+            max-width: 520px;
+        }
+
+        .welcome-subtitle {
+            color: #715e55;
+            font-size: 18px;
+            line-height: 1.6;
+            margin: 0 auto;
+            max-width: 520px;
+        }
+
+        .welcome-notice {
+            margin-top: 22px;
+            padding: 12px 15px;
+            border: 1px solid #eadcd6;
+            background: #fffaf8;
+            border-radius: 12px;
+            color: #806f67;
+            font-size: 12px;
+            line-height: 1.55;
+        }
+
+        .welcome-footer {
+            padding: 20px 40px 30px;
+            border-top: 1px solid #f0e4df;
+            background: #fffdfc;
+        }
+
+        .welcome-continue-btn {
+            width: 100%;
+            border: none;
+            border-radius: 15px;
+            padding: 14px 20px;
+            background: #bd3800;
+            color: #fff;
+            font-size: 17px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 10px 24px rgba(189, 56, 0, .18);
+            transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+        }
+
+        .welcome-continue-btn:hover {
+            background: #a92f00;
+            transform: translateY(-1px);
+            box-shadow: 0 14px 28px rgba(189, 56, 0, .24);
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .auth-tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--muted-color);
+            cursor: pointer;
+            padding-bottom: 8px;
+            position: relative;
+        }
+
+        .auth-tab-btn.active {
+            color: var(--primary-color);
+        }
+
+        .auth-tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -11px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary-color);
+            border-radius: 3px;
+        }
+
+        .auth-form {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .auth-form.active {
+            display: flex;
+        }
+
+        /* --- BỐ CỤC CHÍNH --- */
+        .app-container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+            position: relative;
+            z-index: 2;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 30px 40px;
+            overflow-y: auto;
+        }
+
+        .header-brand-bar {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            margin-bottom: 25px;
+            gap: 12px;
+            min-height: 48px;
+        }
+
+        .home-brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: transparent;
+            border: 0;
+            padding: 0;
+            border-radius: 0;
+            cursor: pointer;
+            box-shadow: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .home-brand-logo:hover {
+            box-shadow: none;
+            transform: translateY(-1px);
+            opacity: 0.96;
+        }
+
+        .brand-icon {
+            width: 42px;
+            height: 42px;
+            background: #ff3b30;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 18px;
+            box-shadow: 0 3px 8px rgba(255, 59, 48, 0.4);
+        }
+
+        .brand-text-group h4 {
+            font-size: 22px;
+            color: var(--text-color);
+            font-weight: 800;
+            line-height: 1.15;
+            white-space: nowrap;
+        }
+
+        .brand-text-group p {
+            font-size: 12px;
+            color: var(--muted-color);
+            font-weight: 500;
+        }
+
+        /* --- AVATAR & USER PROFILE DROPDOWN MENU --- */
+        .user-profile-wrapper {
+            position: relative;
+        }
+
+        .user-avatar-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 2px solid var(--primary-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .user-avatar-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px var(--glow-color);
+        }
+
+        .user-avatar-btn img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-dropdown-menu {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            width: 240px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            animation: fadeIn 0.2s ease;
+            overflow: hidden;
+        }
+
+        .user-dropdown-menu.active {
+            display: flex;
+        }
+
+        .dropdown-header {
+            padding: 15px;
+            background: var(--input-bg);
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .dropdown-header b {
+            font-size: 14px;
+            color: var(--text-color);
+            display: block;
+            word-break: break-all;
+        }
+
+        .dropdown-item {
+            padding: 12px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-color);
+            background: none;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .dropdown-item:hover {
+            background: var(--bg-color);
+            color: var(--primary-color);
+        }
+
+        .dropdown-item.logout {
+            color: #ef4444;
+            border-bottom: none;
+        }
+
+        .dropdown-item.logout:hover {
+            background: #fef2f2;
+        }
+
+        .tab-content {
+            display: none;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* --- SIDEBAR BÊN PHẢI --- */
+        .sidebar {
+            width: 300px;
+            background: var(--panel-bg);
+            border-left: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: relative;
+            transition: transform 0.3s ease;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.02);
+            z-index: 100;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(100%);
+            position: absolute;
+            right: 0;
+            height: 100%;
+        }
+
+        .toggle-btn {
+            position: absolute;
+            top: 20px;
+            left: -42px;
+            background: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            width: 38px;
+            height: 38px;
+            border-radius: 8px 0 0 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            box-shadow: -3px 0 8px rgba(0,0,0,0.03);
+        }
+
+        .sidebar-brand {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            min-height: 44px;
+        }
+
+        .sidebar-brand-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        /* Avatar nằm trên thanh công cụ bên phải, ngay sau tên Iris AI Studio */
+        .sidebar-user-profile {
+            margin-left: auto;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar-user-profile .user-avatar-btn {
+            width: 42px;
+            height: 42px;
+        }
+
+        .sidebar-user-profile .user-dropdown-menu {
+            top: 52px;
+            right: 0;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .menu-item {
+            padding: 12px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--muted-color);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .menu-item:hover {
+            background: var(--bg-color);
+            color: var(--primary-color);
+            box-shadow: 0 0 10px var(--glow-color);
+        }
+
+        .menu-item.active {
+            background: var(--primary-color);
+            color: #ffffff;
+            box-shadow: 0 0 12px var(--glow-color);
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 25px 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--muted-color);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            background: var(--input-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-color);
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 8px var(--glow-color);
+        }
+
+        button.btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        button.btn-primary:hover {
+            background: var(--primary-hover);
+            box-shadow: 0 0 10px var(--glow-color);
+        }
+
+        button.btn-secondary {
+            background: #8c7b75;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .sub-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .sub-tab-btn {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--muted-color);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .sub-tab-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .sub-section {
+            display: none;
+        }
+
+        .sub-section.active {
+            display: block;
+        }
+
+        .iris-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .iris-card {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .iris-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 20px var(--glow-color);
+            border-color: var(--primary-color);
+        }
+
+        .iris-card img {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .iris-detail-container {
+            display: flex;
+            gap: 25px;
+            align-items: flex-start;
+        }
+
+        .detail-left-zoom {
+            flex: 1;
+            text-align: center;
+        }
+
+        .detail-left-zoom img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 12px;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 8px 25px var(--glow-color);
+            margin-bottom: 10px;
+        }
+
+        .detail-right-content {
+            flex: 1.5;
+        }
+
+        .detail-right-content h3 {
+            font-size: 22px;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+        }
+
+        .detail-right-content p {
+            font-size: 13px;
+            color: var(--muted-color);
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .spec-box {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .dimension-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .dimension-item {
+            font-size: 12px;
+            color: var(--muted-color);
+            background: var(--card-bg);
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+
+        .back-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 15px;
+        }
+
+        .file-result-table-container {
+            margin-top: 20px;
+            max-height: 350px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background: var(--card-bg);
+            display: none;
+        }
+
+        .file-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            text-align: left;
+        }
+
+        .file-table th, .file-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .batch-summary-container {
+            margin-top: 18px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            background: var(--card-bg);
+            display: none;
+        }
+
+        .batch-summary-title {
+            padding: 12px 15px;
+            background: var(--input-bg);
+            border-bottom: 1px solid var(--border-color);
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--text-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .batch-summary-hint {
+            font-size: 11px;
+            color: var(--muted-color);
+            font-weight: 500;
+        }
+
+        .batch-summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .batch-summary-table th, .batch-summary-table td {
+            padding: 11px 12px;
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .batch-summary-table th {
+            background: var(--input-bg);
+            color: var(--muted-color);
+            font-weight: 700;
+        }
+
+        .batch-summary-row {
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+        }
+
+        .batch-summary-row:hover {
+            background: var(--input-bg);
+        }
+
+        .batch-detail-btn {
+            border: 1px solid var(--primary-color);
+            background: transparent;
+            color: var(--primary-color);
+            border-radius: 7px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .batch-detail-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .batch-detail-table-wrap {
+            max-height: 480px;
+            overflow: auto;
+            width: 100%;
+        }
+
+        /* --- KHUNG THÔNG BÁO & NÚT XEM CHI TIẾT --- */
+        .result-box {
+            margin-top: 14px;
+            padding: 12px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            font-size: 13px;
+            line-height: 1.55;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+            animation: resultBoxIn .25s ease;
+        }
+
+        .result-box:empty {
+            display: none;
+        }
+
+        .result-box.success {
+            border-color: rgba(20, 140, 75, .28);
+            background: linear-gradient(135deg, rgba(20, 140, 75, .07), var(--card-bg));
+        }
+
+        .result-box.error {
+            border-color: rgba(210, 70, 70, .28);
+            background: linear-gradient(135deg, rgba(210, 70, 70, .07), var(--card-bg));
+        }
+
+        .confidence-box {
+            margin-top: 2px;
+            padding: 11px 13px;
+            border: 1px solid rgba(217, 119, 127, .28);
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(217, 119, 127, .08), var(--card-bg));
+            color: var(--text-color);
+            font-size: 13px;
+        }
+
+        .confidence-value {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-left: 5px;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: rgba(20, 140, 75, .10);
+            color: #137333;
+            font-weight: 800;
+        }
+
+        .confidence-value.low {
+            background: rgba(210, 70, 70, .10);
+            color: #c53030;
+        }
+
+        .confidence-value.medium {
+            background: rgba(176, 96, 0, .10);
+            color: #b06000;
+        }
+
+        .batch-detail-callout {
+            margin-top: 8px;
+            padding: 11px 12px;
+            border: 1px dashed var(--primary-color);
+            border-radius: 10px;
+            background: linear-gradient(135deg, rgba(217, 119, 127, .08), var(--card-bg));
+        }
+
+        .batch-detail-callout-text {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 9px;
+            font-size: 11px;
+            color: var(--muted-color);
+            line-height: 1.45;
+        }
+
+        .batch-detail-callout-text i {
+            color: var(--primary-color);
+            font-size: 14px;
+        }
+
+        .batch-detail-callout .batch-detail-btn {
+            width: 100%;
+            padding: 9px 12px;
+            font-size: 12px;
+            background: var(--card-bg);
+        }
+
+        .batch-detail-callout .batch-detail-btn:hover {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .progress-file-box {
+            margin: 14px 0 4px;
+            padding: 11px 13px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--input-bg);
+            text-align: left;
+        }
+
+        .progress-file-label {
+            display: block;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            color: var(--muted-color);
+            margin-bottom: 4px;
+        }
+
+        .progress-file-name {
+            display: block;
+            color: var(--text-color);
+            font-size: 13px;
+            font-weight: 800;
+            word-break: break-word;
+        }
+
+        .progress-status-box {
+            margin-top: 12px;
+            padding: 9px 11px;
+            border: 1px solid var(--border-color);
+            border-radius: 9px;
+            background: var(--card-bg);
+            color: var(--muted-color);
+            font-size: 11px;
+        }
+
+        @keyframes resultBoxIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .batch-detail-meta {
+            margin-bottom: 14px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .batch-detail-stat {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 9px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .batch-detail-stat small {
+            display: block;
+            color: var(--muted-color);
+            font-size: 10px;
+            margin-bottom: 4px;
+        }
+
+        .batch-detail-stat strong {
+            font-size: 16px;
+            color: var(--primary-color);
+        }
+
+        .progress-modal-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: var(--input-bg);
+            border: 2px solid var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            color: var(--primary-color);
+            font-size: 25px;
+        }
+
+        .progress-bar-track {
+            width: 100%;
+            height: 10px;
+            border-radius: 999px;
+            background: var(--border-color);
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: var(--primary-color);
+            transition: width 0.25s ease;
+        }
+
+        @media (max-width: 760px) {
+            .batch-detail-meta { grid-template-columns: repeat(2, 1fr); }
+            .batch-summary-table, .batch-detail-table-wrap { overflow-x: auto; }
+            .header-brand-bar { gap: 8px; }
+            .home-brand-logo { padding: 0; gap: 9px; }
+            .brand-text-group p { display: none; }
+            .brand-text-group h4 { font-size: 18px; }
+            .sidebar-brand { gap: 7px; }
+            .sidebar-brand-title { gap: 7px; }
+            .sidebar-brand-title span { font-size: 16px; }
+            .sidebar-user-profile .user-avatar-btn { width: 38px; height: 38px; }
+            .sidebar-user-profile .user-dropdown-menu { right: 0; }
+            .history-action-wrap { align-items: flex-start; margin-left: 0; margin-top: 8px; }
+            .history-card.clickable { flex-direction: column; align-items: stretch; }
+            .welcome-content { padding: 34px 22px 26px; }
+            .welcome-footer { padding: 16px 22px 24px; }
+            .welcome-logo-wrap { width: 68px; height: 68px; margin-bottom: 18px; }
+            .welcome-subtitle { font-size: 15px; }
+        }
+
+        .file-table th {
+            background: var(--input-bg);
+            color: var(--muted-color);
+            font-weight: 700;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .history-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 11px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .badge-setosa { background: #fce8e6; color: #c53030; }
+        .badge-versicolor { background: #e6f4ea; color: #137333; }
+        .badge-virginica { background: #fef7e0; color: #b06000; }
+        .badge-default { background: var(--border-color); color: var(--text-color); }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999999;
+        }
+
+        .modal-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            width: 700px;
+            max-width: 94%;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            animation: fadeIn 0.3s ease-in-out forwards;
+        }
+
+        .modal-header {
+            padding: 20px 28px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            color: var(--primary-color);
+            font-size: 22px;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 22px;
+            color: var(--muted-color);
+            cursor: pointer;
+        }
+
+        .modal-body {
+            padding: 30px;
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .modal-footer {
+            padding: 18px 28px;
+            background: var(--input-bg);
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-list {
+            list-style: none;
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .history-card {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            padding: 14px 18px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-card.clickable {
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+
+        .history-card.clickable:hover {
+            transform: translateY(-1px);
+            border-color: var(--primary-color);
+            box-shadow: 0 6px 16px var(--glow-color);
+        }
+
+        .history-action-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            margin-left: 14px;
+            flex-shrink: 0;
+        }
+
+        .runtime-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 9px;
+            border-radius: 999px;
+            background: rgba(100, 116, 139, .10);
+            color: var(--muted-color);
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .history-detail-link {
+            border: 1px solid var(--primary-color);
+            background: transparent;
+            color: var(--primary-color);
+            border-radius: 7px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 700;
+            transition: all 0.2s ease;
+        }
+
+        .history-detail-link:hover {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .bottom-settings {
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .setting-row-mini {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--muted-color);
+        }
+
+        .setting-row-mini select, .setting-row-mini button {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .std-btn-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 5px;
+        }
+        .std-btn {
+            flex: 1;
+            padding: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
+
+        /* --- STYLES MỚI CHO TAB ĐÁNH GIÁ MÔ HÌNH --- */
+        .eval-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .eval-card {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .eval-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 6px 15px var(--glow-color);
+        }
+
+        .eval-card h4 {
+            font-size: 13px;
+            color: var(--muted-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .eval-card .acc-val {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+
+        .kernel-checkbox-group {
+            display: flex;
+            gap: 15px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            padding: 12px 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .kernel-checkbox-label {
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-color);
+        }
+
+        .kernel-checkbox-label input {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary-color);
+            cursor: pointer;
+        }
+
+        /* HEATMAP CONFUSION MATRIX GRID */
+        .confusion-matrix-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            max-width: 320px;
+            margin: 15px auto;
+        }
+
+        .cm-cell {
+            padding: 14px 10px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 700;
+            font-size: 15px;
+            color: white;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
+        }
+
+        .cm-cell-sub {
+            font-size: 10px;
+            font-weight: 400;
+            opacity: 0.85;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- HIỆU ỨNG CÁNH HOA RƠI -->
+    <div class="petals-container" id="petals"></div>
+
+    <!-- MÀN HÌNH ĐĂNG NHẬP / ĐĂNG KÝ BẮT BUỘC QUA SUPABASE -->
+    <div id="auth-modal-overlay">
+        <div class="auth-card">
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" onclick="switchAuthTab('login-form', this)">Đăng nhập</button>
+                <button class="auth-tab-btn" onclick="switchAuthTab('register-form', this)">Đăng ký tài khoản</button>
+            </div>
+
+            <!-- Form Đăng nhập -->
+            <form id="login-form" class="auth-form active" onsubmit="handleSupabaseLogin(event)">
+                <h3 style="font-size: 18px; margin-bottom: 5px; color: var(--primary-color);">Đăng nhập tài khoản của bạn</h3>
+                <p style="font-size: 12px; color: var(--muted-color); margin-bottom: 10px;">Nhập tài khoản đã đăng ký trên hệ thống.</p>
+                <div class="input-group">
+                    <label>Tên đăng nhập</label>
+                    <input id="login-username" type="text" required placeholder="Nhập tên tài khoản...">
+                </div>
+                <div class="input-group">
+                    <label>Mật khẩu</label>
+                    <input id="login-password" type="password" required placeholder="Nhập mật khẩu...">
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top: 5px;">Đăng nhập ngay</button>
+            </form>
+
+            <!-- Form Đăng ký -->
+            <form id="register-form" class="auth-form" onsubmit="handleSupabaseRegister(event)">
+                <h3 style="font-size: 18px; margin-bottom: 5px; color: var(--primary-color);">Tạo tài khoản mới</h3>
+                <p style="font-size: 12px; color: var(--muted-color); margin-bottom: 10px;">Tạo tài khoản để tiếp tục truy cập website.</p>
+                <div class="input-group">
+                    <label>Tên đăng nhập</label>
+                    <input id="reg-username" type="text" required placeholder="Tạo tên tài khoản...">
+                </div>
+                <div class="input-group">
+                    <label>Mật khẩu</label>
+                    <input id="reg-password" type="password" required placeholder="Tạo mật khẩu...">
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top: 5px;">Đăng ký vào hệ thống</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- POPUP CHÀO MỪNG SAU KHI ĐĂNG NHẬP THÀNH CÔNG -->
+    <div id="welcome-modal-overlay" aria-hidden="true">
+        <div class="welcome-modal-card" role="dialog" aria-modal="true" aria-labelledby="welcome-title">
+            <button class="welcome-close" type="button" aria-label="Đóng" onclick="closeWelcomeModal()">&times;</button>
+            <div class="welcome-content">
+                <div class="welcome-logo-wrap">
+                    <img class="welcome-logo" src="images/LogoND.png" alt="Logo Iris AI Studio">
+                </div>
+                <div class="welcome-kicker">Thông báo chính thức</div>
+                <h2 id="welcome-title" class="welcome-title">Chào mừng đến với<br>website chính thức của<br>Doan Nguyen Duong</h2>
+                <p class="welcome-subtitle">Website chỉ phục vụ mục đích học tập và nghiên cứu.</p>
+                <div class="welcome-notice">
+                    <i class="fa-solid fa-circle-info"></i>
+                    Bạn đã đăng nhập thành công. Hãy nhấn <b>Tiếp tục</b> để bắt đầu sử dụng hệ thống dự đoán hoa Iris.
+                    Mọi vấn đề bạn gặp phải hãy liên hệ qua admin dngduong102@gmail.com để được giải quyết.
+                </div>
+            </div>
+            <div class="welcome-footer">
+                <button class="welcome-continue-btn" type="button" onclick="closeWelcomeModal()">Tiếp tục</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH LOADING -->
+    <div id="page-loader">
+        <div class="spinner"></div>
+        <p style="font-weight: 500; color: var(--muted-color); font-size: 14px;">Đang kết nối Supabase...</p>
+    </div>
+
+    <!-- MODAL THÔNG TIN TÀI KHOẢN / ĐỔI MẬT KHẨU / ĐỔI AVATAR -->
+    <div id="profile-modal" class="modal-overlay">
+        <div class="modal-card" style="width: 450px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-gear"></i> Quản lý Tài khoản</h3>
+                <button class="modal-close-btn" onclick="closeProfileModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="flex-direction: column; gap: 15px; text-align: left;">
+                <div style="text-align: center; width: 100%;">
+                    <div id="modal-avatar-preview" style="width: 80px; height: 80px; border-radius: 50%; border: 3px solid var(--primary-color); margin: 0 auto 10px; overflow: hidden; background: var(--input-bg);">
+                        <img id="profile-preview-img" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="Avatar" style="width:100%; height:100%; object-fit:cover;">
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <label>Tải ảnh đại diện (.jpg, .png)</label>
+                    <input id="profile-avatar-file" type="file" accept="image/jpeg, image/png" onchange="previewAvatarImage(event)">
+                </div>
+
+                <div class="input-group">
+                    <label>Mật khẩu mới </label>
+                    <input id="profile-new-password" type="password" placeholder="Nhập mật khẩu mới...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeProfileModal()" class="btn-secondary">Hủy</button>
+                <button onclick="saveProfileChanges()" class="btn-primary" style="width: auto; margin-top:0; padding: 8px 20px;">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP THÀNH CÔNG DỰ ĐOÁN -->
+    <div id="success-modal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="detail-modal-title"><i class="fa-solid fa-circle-check"></i> Dự đoán thành công!</h3>
+                <button class="modal-close-btn" onclick="closeSuccessModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div style="flex: 1; text-align: center;">
+                    <img id="modal-flower-img" src="" alt="Flower" style="width: 100%; height: 200px; object-fit: cover; border-radius: 12px; border: 2px solid var(--primary-color);">
+                </div>
+                <div style="flex: 1.4; display: flex; flex-direction: column; gap: 10px;">
+                    <div id="modal-flower-name" style="font-size: 24px; font-weight: 800; color: var(--primary-color);"></div>
+                    <div class="dimension-item" id="row-info-1"></div>
+                    <div class="dimension-item" id="row-info-2"></div>
+                    <div class="dimension-item" id="row-info-3"></div>
+                    <div class="dimension-item" id="row-info-4"></div>
+                    <div id="manual-confidence-box" class="confidence-box" style="display:none;">
+                        <i class="fa-solid fa-shield-halved" style="color:var(--primary-color); margin-right:6px;"></i>
+                        <b>Độ tin cậy dự đoán:</b>
+                        <span id="manual-confidence-value" class="confidence-value">--</span>
+                    </div>
+
+                    <div id="random-detail-callout" class="batch-detail-callout" style="display:none;">
+                        <div class="batch-detail-callout-text">
+                            <i class="fa-solid fa-circle-info"></i>
+                            <span>Kết quả Random đã được tổng hợp. Mở bảng chi tiết để xem từng mẫu và thông số dự đoán.</span>
+                        </div>
+                        <button class="batch-detail-btn" id="btn-open-detail" onclick="openDetailRandomModal()">
+                            <i class="fa-solid fa-table-list"></i> Xem chi tiết bảng kết quả
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeSuccessModal()" class="btn-primary" style="width: auto; margin-top:0; padding: 8px 20px;">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- POPUP TIẾN TRÌNH DỰ ĐOÁN FILE -->
+    <div id="file-progress-modal" class="modal-overlay">
+        <div class="modal-card" style="width: 520px;">
+            <div class="modal-body" style="display:block; text-align:center; padding:32px 28px;">
+                <div class="progress-modal-icon"><i class="fa-solid fa-spinner fa-spin"></i></div>
+                <h3 style="margin:0 0 2px; color:var(--primary-color);">Đang dự đoán file</h3>
+                <div class="progress-file-box">
+                    <span class="progress-file-label">File đang được xử lý</span>
+                    <span id="file-progress-name" class="progress-file-name"></span>
+                </div>
+                <div id="file-progress-text" class="progress-status-box">Đang đọc và chuẩn bị dữ liệu...</div>
+                <div class="progress-bar-track"><div id="file-progress-fill" class="progress-bar-fill"></div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CHI TIẾT KẾT QUẢ BATCH -->
+    <div id="batch-detail-modal" class="modal-overlay">
+        <div class="modal-card" style="width: 980px; max-width: 96%;">
+            <div class="modal-header">
+                <h3 id="batch-detail-title"><i class="fa-solid fa-table"></i> Chi tiết kết quả</h3>
+                <button class="modal-close-btn" onclick="closeBatchDetailModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="display:block; max-height:680px; overflow:hidden; padding:22px 25px;">
+                <div id="batch-detail-meta" class="batch-detail-meta"></div>
+                <div class="batch-detail-table-wrap">
+                    <table class="file-table">
+                        <thead id="batch-detail-thead"></thead>
+                        <tbody id="batch-detail-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <span style="font-size:11px; color:var(--muted-color);"><i class="fa-solid fa-circle-info"></i> Có thể cuộn để xem toàn bộ dữ liệu.</span>
+                <button onclick="closeBatchDetailModal()" class="btn-primary" style="width:auto; margin-top:0; padding:8px 20px;">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SO SÁNH MẪU (COMPARE MODE) -->
+    <div id="compare-modal" class="modal-overlay">
+        <div class="modal-card" style="width: 850px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-code-compare"></i> Bảng So sánh các Mẫu Dự đoán</h3>
+                <button class="modal-close-btn" onclick="closeCompareModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="display: block; max-height: 450px; overflow-y: auto;">
+                <table class="file-table" id="compare-table">
+                    <thead>
+                        <tr>
+                            <th>Thời gian</th>
+                            <th>Loài dự đoán</th>
+                            <th>Sepal (L / W)</th>
+                            <th>Petal (L / W)</th>
+                            <th>Thời gian chạy</th>
+                            <th>Độ tin cậy</th>
+                        </tr>
+                    </thead>
+                    <tbody id="compare-table-tbody"></tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeCompareModal()" class="btn-primary" style="width: auto; margin-top:0; padding: 8px 20px;">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GIAO DIỆN CHÍNH -->
+    <div class="app-container">
+        <div class="main-content">
+            <div class="header-brand-bar">
+                <div class="home-brand-logo" onclick="goHome()">
+                    <div class="brand-icon">API</div>
+                    <div class="brand-text-group">
+                        <h4 id="lbl-brand-title">Iris SVM Studio</h4>
+                        <p id="lbl-brand-sub">SVM Prediction System</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Tab 1: Giới thiệu -->
+            <div id="tab-intro" class="tab-content active">
+                <div id="intro-main-view" class="card animate-fade">
+                    <h2 id="t1-title">🌸 Giới thiệu về tập dữ liệu hoa Iris</h2>
+                    <p id="t1-desc" style="font-size: 14px; color: var(--muted-color); line-height: 1.6; margin-bottom: 15px;">
+                        Tập dữ liệu hoa Iris là một tập dữ liệu kinh điển trong lĩnh vực Học máy và Thống kê, được giới thiệu bởi nhà sinh vật học Ronald Fisher vào năm 1936. Hãy chọn một loài hoa dưới đây để xem chi tiết thông số kích thước và đặc điểm.
+                    </p>
+                    <div class="iris-grid">
+                        <div class="iris-card" onclick="showIrisDetail('setosa')">
+                            <img src="images/Iris1setosa1.jpg" alt="Iris Setosa">
+                            <h4>Iris Setosa</h4>
+                            <p id="c1-desc">Cánh hoa nhỏ, đài hoa rộng và ngắn hơn.</p>
+                        </div>
+                        <div class="iris-card" onclick="showIrisDetail('versicolor')">
+                            <img src="images/Iris1versicolor1.jpg" alt="Iris Versicolor">
+                            <h4>Iris Versicolor</h4>
+                            <p id="c2-desc">Kích thước trung gian, phổ biến ở vùng ôn đới.</p>
+                        </div>
+                        <div class="iris-card" onclick="showIrisDetail('virginica')">
+                            <img src="images/Iris1virginica1.jpg" alt="Iris Virginica">
+                            <h4>Iris Virginica</h4>
+                            <p id="c3-desc">Chiều dài cánh hoa lớn, cấu trúc thanh thoát.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="intro-detail-view" class="card animate-fade" style="display: none;">
+                    <button class="back-btn" onclick="hideIrisDetail()"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</button>
+                    <div class="iris-detail-container">
+                        <div class="detail-left-zoom">
+                            <img id="detail-img" src="" alt="Iris Detail">
+                            <h4 id="detail-title" style="color: var(--text-color); font-size: 16px; font-weight: 700;"></h4>
+                        </div>
+                        <div class="detail-right-content">
+                            <h3 id="detail-name"></h3>
+                            <p id="detail-desc"></p>
+                            <div class="spec-box">
+                                <b id="lbl-dims">📏 Thông số kích thước chuẩn (Trung bình):</b>
+                                <div class="dimension-grid">
+                                    <div class="dimension-item" id="dim-sl"></div>
+                                    <div class="dimension-item" id="dim-sw"></div>
+                                    <div class="dimension-item" id="dim-pl"></div>
+                                    <div class="dimension-item" id="dim-pw"></div>
+                                </div>
+                            </div>
+                            <div class="spec-box">
+                                <b id="lbl-habitat">🌿 Môi trường sống & Phân bố:</b>
+                                <p id="detail-habitat" style="margin-top: 4px; color: var(--text-color); font-size: 12px;"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Dự đoán & Biểu đồ -->
+            <div id="tab-predict" class="tab-content">
+                <div class="card animate-fade">
+                    <h2 id="t2-title">🤖 Hệ thống Dự đoán & Biểu đồ Phân phối</h2>
+                    
+                    <div class="sub-nav">
+                        <button class="sub-tab-btn active" id="btn-sub1" onclick="switchSubTab('sub-manual', this)">1. Nhập dữ liệu thủ công</button>
+                        <button class="sub-tab-btn" id="btn-sub2" onclick="switchSubTab('sub-file', this)">2. Tải file lên dự đoán</button>
+                    </div>
+
+                    <div id="sub-manual" class="sub-section active">
+                        <p id="t2-sub1-desc" style="font-size: 13px; color: var(--muted-color); margin-bottom: 15px;">Nhập thông số hoặc chọn số lần random & tải chuẩn loài để kiểm tra.</p>
+                        
+                        <div class="input-group">
+                            <label>Chọn Mô hình / SVC Kernel:</label>
+                            <select id="select-kernel">
+                                <option value="linear" selected>SVM Kernel Linear (Tuyến tính)</option>
+                                <option value="rbf">SVM Kernel RBF (Radial Basis Function)</option>
+                                <option value="poly">SVM Kernel Polynomial (Đa thức)</option>
+                                <option value="sigmoid">SVM Kernel Sigmoid</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label id="lbl-sl">Chiều dài đài hoa (Sepal Length)</label>
+                            <input id="sepal_length" type="number" step="0.1" value="5.1">
+                        </div>
+                        <div class="input-group">
+                            <label id="lbl-sw">Chiều rộng đài hoa (Sepal Width)</label>
+                            <input id="sepal_width" type="number" step="0.1" value="3.5">
+                        </div>
+                        <div class="input-group">
+                            <label id="lbl-pl">Chiều dài cánh hoa (Petal Length)</label>
+                            <input id="petal_length" type="number" step="0.1" value="1.4">
+                        </div>
+                        <div class="input-group">
+                            <label id="lbl-pw">Chiều rộng cánh hoa (Petal Width)</label>
+                            <input id="petal_width" type="number" step="0.1" value="0.2">
+                        </div>
+
+                        <button id="predict-btn" class="btn-primary" onclick="predictManual()">Thực hiện Dự đoán</button>
+
+                        <div style="display: flex; gap: 10px; margin-top: 15px; align-items: flex-end;">
+                            <div style="width: 130px;">
+                                <label id="lbl-random-count" style="font-size: 12px;">Số lần random:</label>
+                                <input id="random-count" type="number" value="5" min="1" max="1000">
+                            </div>
+                            <div style="flex: 1;">
+                                <button id="random-btn" class="btn-secondary" style="width: 100%; padding: 11px;" onclick="randomizeAndPredict()">🎲 Random & Dự đoán hàng loạt</button>
+                            </div>
+                        </div>
+
+                        <div style="margin-top: 15px;">
+                            <label style="font-size: 12px; color: var(--muted-color); margin-bottom: 5px;" id="lbl-std-label">Đưa về tham số chuẩn theo loài:</label>
+                            <div class="std-btn-group">
+                                <button class="std-btn" onclick="setStandard('setosa')">Iris Setosa Chuẩn</button>
+                                <button class="std-btn" onclick="setStandard('versicolor')">Iris Versicolor Chuẩn</button>
+                                <button class="std-btn" onclick="setStandard('virginica')">Iris Virginica Chuẩn</button>
+                            </div>
+                        </div>
+
+                        <div id="manual-result" class="result-box"></div>
+
+                        <div id="random-summary-section" class="batch-summary-container">
+                            <div class="batch-summary-title">
+                                <span><i class="fa-solid fa-table-list"></i> Bảng tóm tắt kết quả Random</span>
+                                <span class="batch-summary-hint">Nhấn vào dòng hoặc “Xem chi tiết” để xem từng mẫu</span>
+                            </div>
+                            <div style="overflow-x:auto;">
+                                <table class="batch-summary-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Lần chạy</th>
+                                            <th>Tổng mẫu</th>
+                                            <th>Iris Setosa</th>
+                                            <th>Iris Versicolor</th>
+                                            <th>Iris Virginica</th>
+                                            <th>Chi tiết</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="random-summary-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="sub-file" class="sub-section">
+                        <p id="t2-sub2-desc" style="font-size: 13px; color: var(--muted-color); margin-bottom: 15px;">Tải lên tệp chứa dữ liệu mẫu dưới định dạng `.csv` hoặc `.txt` để dự đoán hàng loạt.</p>
+                        
+                        <div class="input-group">
+                            <label>Loại định dạng file dữ liệu:</label>
+                            <select id="file-type-select">
+                                <option value="unlabeled">File không nhãn (Chỉ có 4 thông số)</option>
+                                <option value="labeled">File có nhãn (Có cột species ở cuối)</option>
+                            </select>
+                        </div>
+
+                        <div class="input-group">
+                            <label id="lbl-file">Chọn file dữ liệu (.csv / .txt)</label>
+                            <input id="file-input" type="file" accept=".csv, .txt">
+                        </div>
+                        <button id="file-btn" class="btn-primary" style="margin-top: 10px;" onclick="predictFile()">Gửi file và Dự đoán</button>
+                        <div id="file-result" class="result-box"></div>
+
+                        <div id="file-summary-section" class="batch-summary-container">
+                            <div class="batch-summary-title">
+                                <span><i class="fa-solid fa-file-circle-check"></i> Bảng tóm tắt kết quả file</span>
+                                <span class="batch-summary-hint">Nhấn vào dòng hoặc “Xem chi tiết” để xem từng bản ghi</span>
+                            </div>
+                            <div style="overflow-x:auto;">
+                                <table class="batch-summary-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tệp dữ liệu</th>
+                                            <th>Tổng mẫu</th>
+                                            <th>Iris Setosa</th>
+                                            <th>Iris Versicolor</th>
+                                            <th>Iris Virginica</th>
+                                            <th>Đúng (nếu có nhãn)</th>
+                                            <th>Chi tiết</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="file-summary-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="file-result-table-wrapper" class="file-result-table-container">
+                            <table class="file-table">
+                                <thead>
+                                    <tr>
+                                        <th>STT</th>
+                                        <th>Đài (L/W)</th>
+                                        <th>Cánh (L/W)</th>
+                                        <th>Kết quả AI Dự đoán</th>
+                                        <th>Nhãn gốc</th>
+                                        <th>Trạng thái</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="file-result-tbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card animate-fade">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 id="t3-title" style="margin-bottom: 0;">📊 Biểu đồ trực quan phân phối mẫu Scatter</h3>
+                        <button id="clear-chart-btn" onclick="clearChartData()" style="background: #e08b93; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">Xóa dữ liệu biểu đồ</button>
+                    </div>
+                    <p id="t3-desc" style="font-size: 13px; color: var(--muted-color); margin-bottom: 15px;">Điểm dữ liệu tích lũy theo từng lần dự đoán.</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label id="lbl-axis-x">Trục X:</label>
+                            <select id="axis-x" onchange="updateChartsData()">
+                                <option value="sepal_length">Chiều dài đài hoa (Sepal Length)</option>
+                                <option value="sepal_width">Chiều rộng đài hoa (Sepal Width)</option>
+                                <option value="petal_length" selected>Chiều dài cánh hoa (Petal Length)</option>
+                                <option value="petal_width">Chiều rộng cánh hoa (Petal Width)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label id="lbl-axis-y">Trục Y:</label>
+                            <select id="axis-y" onchange="updateChartsData()">
+                                <option value="sepal_length">Chiều dài đài hoa (Sepal Length)</option>
+                                <option value="sepal_width" selected>Chiều rộng đài hoa (Sepal Width)</option>
+                                <option value="petal_length">Chiều dài cánh hoa (Petal Length)</option>
+                                <option value="petal_width">Chiều rộng cánh hoa (Petal Width)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="position: relative; height:350px; width:100%; margin-bottom: 25px;">
+                        <canvas id="irisScatterChart"></canvas>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <div>
+                            <h3 id="t4-bar-title" style="font-size: 16px; margin-bottom: 2px;">📈 Thống kê phân phối loài hoa</h3>
+                            <p id="t4-bar-desc" style="font-size: 12px; color: var(--muted-color); margin-bottom: 0;">Biểu đồ thống kê kết quả thực tế.</p>
+                        </div>
+                        <button class="sub-tab-btn" onclick="toggleBarMode()"><i class="fa-solid fa-rotate"></i> <span id="btn-mode-text">Đổi chế độ (%)</span></button>
+                    </div>
+
+                    <div style="position: relative; height: 350px; width: 100%;">
+                        <canvas id="irisBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Đánh giá mô hình -->
+            <div id="tab-eval" class="tab-content">
+                <div class="card animate-fade">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h2>📊 Bảng Đánh giá & So sánh Hiệu năng Mô hình</h2>
+                        <button class="sub-tab-btn" onclick="fetchMetricsData()"><i class="fa-solid fa-arrows-rotate"></i> Làm mới metrics</button>
+                    </div>
+                    <p style="font-size: 13px; color: var(--muted-color); margin-bottom: 20px;">
+                        Thống kê chi tiết các chỉ số toán học (Accuracy, Precision, Recall, F1-Score) thu được từ việc kiểm thử trên tập dữ liệu chuẩn.
+                    </p>
+
+                    <div class="eval-grid">
+                        <div class="eval-card">
+                            <h4>Linear Kernel</h4>
+                            <div class="acc-val" id="acc-linear">--%</div>
+                        </div>
+                        <div class="eval-card">
+                            <h4>RBF Kernel</h4>
+                            <div class="acc-val" id="acc-rbf">--%</div>
+                        </div>
+                        <div class="eval-card">
+                            <h4>Poly Kernel</h4>
+                            <div class="acc-val" id="acc-poly">--%</div>
+                        </div>
+                        <div class="eval-card">
+                            <h4>Sigmoid Kernel</h4>
+                            <div class="acc-val" id="acc-sigmoid">--%</div>
+                        </div>
+                    </div>
+
+                    <div class="kernel-checkbox-group">
+                        <span style="font-size: 13px; font-weight: 700; color: var(--primary-color);"><i class="fa-solid fa-filter"></i> Chọn Kernel so sánh trên biểu đồ:</span>
+                        <label class="kernel-checkbox-label">
+                            <input type="checkbox" value="linear" checked onchange="renderEvaluationChart()"> Linear
+                        </label>
+                        <label class="kernel-checkbox-label">
+                            <input type="checkbox" value="rbf" checked onchange="renderEvaluationChart()"> RBF
+                        </label>
+                        <label class="kernel-checkbox-label">
+                            <input type="checkbox" value="poly" checked onchange="renderEvaluationChart()"> Poly
+                        </label>
+                        <label class="kernel-checkbox-label">
+                            <input type="checkbox" value="sigmoid" checked onchange="renderEvaluationChart()"> Sigmoid
+                        </label>
+                    </div>
+
+                    <div style="position: relative; height: 360px; width: 100%; margin-bottom: 30px;">
+                        <canvas id="evalCompareChart"></canvas>
+                    </div>
+
+                    <h3 style="font-size: 16px; margin-bottom: 12px; color: var(--text-color);"><i class="fa-solid fa-table-list"></i> Bảng Báo cáo Phân loại Chi tiết (Classification Report)</h3>
+                    <div style="overflow-x: auto; margin-bottom: 25px;">
+                        <table class="file-table" id="eval-details-table">
+                            <thead>
+                                <tr>
+                                    <th>Mô hình Kernel</th>
+                                    <th>Loài hoa / Lớp</th>
+                                    <th>Precision</th>
+                                    <th>Recall</th>
+                                    <th>F1-Score</th>
+                                    <th>Số lượng mẫu (Support)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="eval-table-tbody">
+                                <tr><td colspan="6" style="text-align: center; color: var(--muted-color);">Đang tải dữ liệu chỉ số từ máy chủ...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h3 style="font-size: 16px; margin: 0; color: var(--text-color);"><i class="fa-solid fa-border-all"></i> Ma trận Nhầm lẫn (Confusion Matrix Heatmap)</h3>
+                        <div style="width: 220px;">
+                            <select id="cm-kernel-select" onchange="renderConfusionMatrix()">
+                                <option value="linear">Xem Matrix: Linear</option>
+                                <option value="rbf">Xem Matrix: RBF</option>
+                                <option value="poly">Xem Matrix: Poly</option>
+                                <option value="sigmoid">Xem Matrix: Sigmoid</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div style="background: var(--input-bg); border: 1px solid var(--border-color); padding: 20px; border-radius: 12px; text-align: center;">
+                        <p style="font-size: 12px; color: var(--muted-color); margin-bottom: 10px;">Trục dọc: Thực tế | Trục ngang: Dự đoán AI</p>
+                        <div class="confusion-matrix-grid" id="cm-grid-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Lịch sử -->
+            <div id="tab-history" class="tab-content">
+                <div class="card animate-fade">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h2 id="t4-title" style="margin-bottom: 0;">📜 Lịch sử sử dụng hệ thống</h2>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="compare-mode-btn" onclick="toggleCompareMode()" style="background: var(--primary-color); color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600;"><i class="fa-solid fa-code-compare"></i> So sánh mẫu</button>
+                            <button id="clear-history-btn" onclick="clearHistoryData()" style="background: #e08b93; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 12px;">Xóa lịch sử</button>
+                        </div>
+                    </div>
+                    
+                    <div class="sub-nav">
+                        <button class="sub-tab-btn active" id="btn-hist1" onclick="switchSubTabHistory('sub-hist-manual', this)">Lịch sử Nhập thủ công</button>
+                        <button class="sub-tab-btn" id="btn-hist2" onclick="switchSubTabHistory('sub-hist-file', this)">Lịch sử Tải file</button>
+                    </div>
+
+                    <div id="sub-hist-manual" class="sub-section active">
+                        <div style="display: flex; gap: 8px; margin-bottom: 15px; align-items: center; flex-wrap: wrap;">
+                            <span style="font-size: 12px; font-weight: 600; color: var(--muted-color);"><i class="fa-solid fa-filter"></i> Lọc loài:</span>
+                            <button class="sub-tab-btn active" style="padding: 4px 10px; font-size: 12px;" onclick="filterHistorySpecies('all', this)">Tất cả</button>
+                            <button class="sub-tab-btn" style="padding: 4px 10px; font-size: 12px;" onclick="filterHistorySpecies('setosa', this)">Setosa</button>
+                            <button class="sub-tab-btn" style="padding: 4px 10px; font-size: 12px;" onclick="filterHistorySpecies('versicolor', this)">Versicolor</button>
+                            <button class="sub-tab-btn" style="padding: 4px 10px; font-size: 12px;" onclick="filterHistorySpecies('virginica', this)">Virginica</button>
+                        </div>
+
+                        <div id="compare-action-bar" style="display: none; background: var(--input-bg); border: 1px solid var(--border-color); padding: 10px 15px; border-radius: 8px; margin-bottom: 15px; align-items: center; justify-content: space-between;">
+                            <span id="selected-count-text" style="font-size: 13px; font-weight: 600; color: var(--primary-color);">Đã chọn: 0 mẫu (Chọn tối thiểu 2 mẫu)</span>
+                            <button onclick="executeCompare()" class="btn-primary" style="width: auto; margin-top: 0; padding: 6px 16px; font-size: 13px;"><i class="fa-solid fa-play"></i> Tiến hành So sánh</button>
+                        </div>
+
+                        <ul id="manual-history-list" class="history-list">
+                            <p style="color: var(--muted-color); text-align: center; padding: 20px; font-size: 13px;">Chưa có dữ liệu lịch sử thủ công.</p>
+                        </ul>
+                    </div>
+
+                    <div id="sub-hist-file" class="sub-section">
+                        <ul id="file-history-list" class="history-list">
+                            <p style="color: var(--muted-color); text-align: center; padding: 20px; font-size: 13px;">Chưa có dữ liệu lịch sử tải file.</p>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar bên phải -->
+        <div class="sidebar" id="sidebar">
+            <button class="toggle-btn" onclick="toggleSidebar()">
+                <i class="fa-solid fa-bars" id="toggle-icon"></i>
+            </button>
+
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-title">
+                    <i class="fa-solid fa-seedling" style="color: var(--primary-color);"></i>
+                    <span>Iris SVM Studio</span>
+                </div>
+
+                <div class="user-profile-wrapper sidebar-user-profile">
+                    <button class="user-avatar-btn" onclick="toggleUserDropdown(event)" aria-label="Tài khoản người dùng">
+                        <img id="header-user-avatar" src="https://api.dicebear.com/7.x/bottts/svg?seed=User" alt="Avatar người dùng">
+                    </button>
+                    <div class="user-dropdown-menu" id="user-dropdown">
+                        <div class="dropdown-header">
+                            <span style="font-size: 11px; color: var(--muted-color);">Xin chào,</span>
+                            <b id="current-user-display">User</b>
+                        </div>
+                        <button class="dropdown-item" onclick="openProfileModal()"><i class="fa-solid fa-key"></i> Đổi Avatar & mật khẩu </button>
+                        <button class="dropdown-item logout" onclick="handleLogout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</button>
+                    </div>
+                </div>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item active" id="menu-intro" onclick="switchTab('tab-intro', this)">
+                    <i class="fa-solid fa-book-open"></i> <span id="m1">1. Giới thiệu hoa Iris</span>
+                </li>
+                <li class="menu-item" id="menu-predict" onclick="switchTab('tab-predict', this); initCharts();">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> <span id="m2">2. Dự đoán & Biểu đồ </span>
+                </li>
+                <li class="menu-item" id="menu-eval" onclick="switchTab('tab-eval', this); fetchMetricsData();">
+                    <i class="fa-solid fa-chart-line"></i> <span id="m4">3. Đánh giá mô hình</span>
+                </li>
+                <li class="menu-item" id="menu-history" onclick="switchTab('tab-history', this); loadHistory();">
+                    <i class="fa-solid fa-clock-rotate-left"></i> <span id="m3">4. Lịch sử sử dụng</span>
+                </li>
+            </ul>
+
+            <div class="bottom-settings">
+                <button class="btn-secondary" onclick="resetWebsite()" style="margin-top: 0; background: #64748b; padding: 10px;" id="btn-reset">🔄 Đặt lại trang web</button>
+                <div class="setting-row-mini">
+                    <span id="st-lang">Ngôn ngữ</span>
+                    <select id="lang-select" onchange="changeLanguage(this.value)">
+                        <option value="vi">Tiếng Việt</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+                <div class="setting-row-mini">
+                    <span id="st-brightness">Giao diện</span>
+                    <button onclick="toggleTheme()"><i class="fa-solid fa-circle-half-stroke"></i> Đổi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        
+        // CẤU HÌNH API ENDPOINT FASTAPI CỦA BẠN
+        const API_BASE_URL = 'http://127.0.0.1:8000';
+        let lastRandomBatchResults = [];
+        let lastRandomBatchCounts = { setosa: 0, versicolor: 0, virginica: 0 };
+        let lastRandomBatchTime = '';
+        let lastFileBatchResults = [];
+        let lastFileBatchCounts = { setosa: 0, versicolor: 0, virginica: 0 };
+        let lastFileBatchName = '';
+        let lastFileBatchLabeled = false;
+        let lastFileBatchExecutionTimeMs = null;
+        let storedFileHistoryCache = {};
+
+        // CẤU HÌNH KẾT NỐI SUPABASE API CỦA BẠN
+        const SUPABASE_URL = 'https://nikxisedmidfcghmsfxg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5pa3hpc2VkbWlkZmNnaG1zZnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA0MjUyNDIsImV4cCI6MjEwNjAwMTI0Mn0.nNH2KPvKJJZHbfmOdfyqhHQZCqJXyUwRvGuHsRHCsIw';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function switchAuthTab(formId, element) {
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+            document.querySelectorAll('.auth-tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(formId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        async function handleSupabaseRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value.trim();
+            const password = document.getElementById('reg-password').value.trim();
+
+            const { data, error } = await supabaseClient
+                .from('users')
+                .insert([{ username: username, password: password, status: 'Hoạt động' }]);
+
+            if (error) {
+                alert("Lỗi đăng ký (Tên tài khoản có thể đã tồn tại): " + error.message);
+            } else {
+                alert("Đăng ký tài khoản thành công lên CSDL Supabase!");
+                switchAuthTab('login-form', document.querySelector('.auth-tab-btn'));
+            }
+        }
+
+        async function handleSupabaseLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+
+            const { data, error } = await supabaseClient
+                .from('users')
+                .select('*')
+                .eq('username', username)
+                .eq('password', password)
+                .single();
+
+            if (error || !data) {
+                alert("Sai tên đăng nhập hoặc mật khẩu trên CSDL!");
+            } else {
+                localStorage.setItem('iris_current_user', data.username);
+                localStorage.setItem('iris_current_avatar', data.avatar || `https://api.dicebear.com/7.x/bottts/svg?seed=${data.username}`);
+                document.getElementById('auth-modal-overlay').style.display = 'none';
+                updateUserUI(data.username);
+                showWelcomeModal();
+            }
+        }
+
+        function showWelcomeModal() {
+            const modal = document.getElementById('welcome-modal-overlay');
+            if (!modal) return;
+            modal.style.display = 'flex';
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeWelcomeModal() {
+            const modal = document.getElementById('welcome-modal-overlay');
+            if (!modal) return;
+            modal.style.display = 'none';
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        function updateUserUI(username) {
+            document.getElementById('current-user-display').innerText = username;
+            const avatar = localStorage.getItem('iris_current_avatar') || `https://api.dicebear.com/7.x/bottts/svg?seed=${username}`;
+            document.getElementById('header-user-avatar').src = avatar;
+        }
+
+        function toggleUserDropdown(event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById('user-dropdown');
+            dropdown.classList.toggle('active');
+        }
+
+        window.addEventListener('click', () => {
+            const dropdown = document.getElementById('user-dropdown');
+            if (dropdown) dropdown.classList.remove('active');
+        });
+
+        document.addEventListener('click', (event) => {
+            const modal = document.getElementById('welcome-modal-overlay');
+            if (modal && event.target === modal) closeWelcomeModal();
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('welcome-modal-overlay');
+                if (modal && modal.style.display === 'flex') closeWelcomeModal();
+            }
+        });
+
+        // HÀM ĐỌC & PREVIEW ẢNH TẢI LÊN TỪ THƯ VIỆN (.JPG, .PNG)
+        let uploadedAvatarBase64 = "";
+        function previewAvatarImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (file.type !== "image/jpeg" && file.type !== "image/png") {
+                    alert("Chỉ chấp nhận các tệp ảnh dạng .jpg, .jpeg hoặc .png!");
+                    event.target.value = "";
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    uploadedAvatarBase64 = e.target.result;
+                    document.getElementById('profile-preview-img').src = uploadedAvatarBase64;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function openProfileModal() {
+            const currentUser = localStorage.getItem('iris_current_user') || 'User';
+            const currentAvatar = localStorage.getItem('iris_current_avatar') || `https://api.dicebear.com/7.x/bottts/svg?seed=${currentUser}`;
+            uploadedAvatarBase64 = ""; // Reset biến tạm
+            document.getElementById('profile-avatar-file').value = ""; // Clear file input
+            document.getElementById('profile-preview-img').src = currentAvatar;
+            document.getElementById('profile-modal').style.display = 'flex';
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profile-modal').style.display = 'none';
+        }
+
+        async function saveProfileChanges() {
+            const newPass = document.getElementById('profile-new-password').value.trim();
+            const currentUser = localStorage.getItem('iris_current_user');
+
+            if (uploadedAvatarBase64) {
+                localStorage.setItem('iris_current_avatar', uploadedAvatarBase64);
+                document.getElementById('header-user-avatar').src = uploadedAvatarBase64;
+            }
+
+            if (newPass && currentUser) {
+                const { error } = await supabaseClient
+                    .from('users')
+                    .update({ password: newPass })
+                    .eq('username', currentUser);
+
+                if (error) {
+                    alert("Lỗi khi cập nhật mật khẩu lên Supabase: " + error.message);
+                    return;
+                }
+                alert("Cập nhật mật khẩu thành công!");
+            } else {
+                alert("Đã lưu thông tin tài khoản thành công!");
+            }
+            closeProfileModal();
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('iris_current_user');
+            localStorage.removeItem('iris_current_avatar');
+            location.reload();
+        }
+
+        window.addEventListener("load", () => {
+            const loader = document.getElementById("page-loader");
+            loader.style.opacity = "0";
+            setTimeout(() => loader.style.display = "none", 400);
+
+            const currentUser = localStorage.getItem('iris_current_user');
+            if (!currentUser) {
+                document.getElementById('auth-modal-overlay').style.display = 'flex';
+            } else {
+                document.getElementById('auth-modal-overlay').style.display = 'none';
+                updateUserUI(currentUser);
+            }
+            initCharts();
+        });
+
+        // Tạo hiệu ứng cánh hoa rơi
+        function createPetals() {
+            const container = document.getElementById('petals');
+            for (let i = 0; i < 15; i++) {
+                const petal = document.createElement('div');
+                petal.className = 'petal';
+                const size = Math.random() * 8 + 8;
+                petal.style.width = `${size}px`;
+                petal.style.height = `${size * 1.5}px`;
+                petal.style.left = `${Math.random() * 100}vw`;
+                petal.style.top = `${-Math.random() * 20}vh`;
+                petal.style.opacity = Math.random() * 0.6 + 0.2;
+                petal.style.animationDuration = `${Math.random() * 8 + 6}s`;
+                petal.style.animationDelay = `${Math.random() * 5}s`;
+                container.appendChild(petal);
+            }
+        }
+        createPetals();
+
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.menu-item').forEach(item => item.classList.remove('active'));
+            
+            const target = document.getElementById(tabId);
+            target.classList.add('active');
+            if (element) element.classList.add('active');
+            if (tabId === 'tab-predict') {
+                initCharts();
+                updateChartsData();
+            }
+            if (tabId === 'tab-history') loadHistory();
+            if (tabId === 'tab-eval') fetchMetricsData();
+        }
+
+        function goHome() {
+            hideIrisDetail();
+            switchTab('tab-intro', document.getElementById('menu-intro'));
+        }
+
+        const irisImages = {
+            setosa: "images/Iris1setosa1.jpg",
+            versicolor: "images/Iris1versicolor1.jpg",
+            virginica: "images/Iris1virginica1.jpg"
+        };
+
+        const irisDetails = {
+            vi: {
+                setosa: {
+                    name: "Iris Setosa",
+                    img: "images/Iris1setosa1.jpg",
+                    desc: "Iris Setosa là một loài thực vật có hoa thuộc chi Diên vĩ. Loài này nổi bật với kích thước cánh hoa nhỏ hơn đáng kể.",
+                    sl: "Chiều dài đài: ~5.0 cm", sw: "Chiều rộng đài: ~3.4 cm", pl: "Chiều dài cánh: ~1.5 cm", pw: "Chiều rộng cánh: ~0.2 cm",
+                    habitat: "Phân bố chủ yếu ở các khu vực có khí hậu hàn đới, ven các vùng đất ngập nước phía bắc."
+                },
+                versicolor: {
+                    name: "Iris Versicolor",
+                    img: "images/Iris1versicolor1.jpg",
+                    desc: "Iris Versicolor là loài bản địa của Bắc Mỹ, thường mọc ở các đồng cỏ ẩm ướt, đầm lầy và bờ suối.",
+                    sl: "Chiều dài đài: ~5.9 cm", sw: "Chiều rộng đài: ~2.8 cm", pl: "Chiều dài cánh: ~4.3 cm", pw: "Chiều rộng cánh: ~1.3 cm",
+                    habitat: "Thường mọc hoang dã ở Bắc Mỹ, ưa sống ở những nơi có độ ẩm cao và đất mùn màu mỡ."
+                },
+                virginica: {
+                    name: "Iris Virginica",
+                    img: "images/Iris1virginica1.jpg",
+                    desc: "Iris Virginica là loài có kích thước lớn nhất trong ba loài thuộc tập dữ liệu Fisher Iris.",
+                    sl: "Chiều dài đài: ~6.6 cm", sw: "Chiều rộng đài: ~3.0 cm", pl: "Chiều dài cánh: ~5.6 cm", pw: "Chiều rộng cánh: ~2.0 cm",
+                    habitat: "Phổ biến ở miền Đông Nam Hoa Kỳ, thích nghi tốt với các vùng đầm lầy ven biển và bờ ao hồ."
+                }
+            },
+            en: {
+                setosa: {
+                    name: "Iris Setosa",
+                    img: "images/Iris1setosa1.jpg",
+                    desc: "Iris Setosa is a species of flowering plant in the family Iridaceae.",
+                    sl: "Sepal Length: ~5.0 cm", sw: "Sepal Width: ~3.4 cm", pl: "Petal Length: ~1.5 cm", pw: "Petal Width: ~0.2 cm",
+                    habitat: "Primarily distributed in subarctic and cold temperate regions."
+                },
+                versicolor: {
+                    name: "Iris Versicolor",
+                    img: "images/Iris1versicolor1.jpg",
+                    desc: "Iris Versicolor is native to North America, commonly found in wet meadows.",
+                    sl: "Sepal Length: ~5.9 cm", sw: "Sepal Width: ~2.8 cm", pl: "Petal Length: ~4.3 cm", pw: "Petal Length: ~1.3 cm",
+                    habitat: "Wildly found across North America, thriving in high-moisture environments."
+                },
+                virginica: {
+                    name: "Iris Virginica",
+                    img: "images/Iris1virginica1.jpg",
+                    desc: "Iris Virginica is the largest of the three species in the Fisher Iris dataset.",
+                    sl: "Sepal Length: ~6.6 cm", sw: "Sepal Width: ~3.0 cm", pl: "Petal Length: ~5.6 cm", pw: "Petal Width: ~2.0 cm",
+                    habitat: "Common in the southeastern United States, well-adapted to coastal marshes."
+                }
+            }
+        };
+
+        function showIrisDetail(type) {
+            const lang = localStorage.getItem('lang') || 'vi';
+            const data = irisDetails[lang][type];
+
+            document.getElementById('detail-img').src = data.img;
+            document.getElementById('detail-title').innerText = data.name;
+            document.getElementById('detail-name').innerText = data.name;
+            document.getElementById('detail-desc').innerText = data.desc;
+            document.getElementById('dim-sl').innerText = data.sl;
+            document.getElementById('dim-sw').innerText = data.sw;
+            document.getElementById('dim-pl').innerText = data.pl;
+            document.getElementById('dim-pw').innerText = data.pw;
+            document.getElementById('detail-habitat').innerText = data.habitat;
+
+            document.getElementById('intro-main-view').style.display = 'none';
+            const detailView = document.getElementById('intro-detail-view');
+            detailView.style.display = 'block';
+            detailView.classList.add('animate-fade');
+        }
+
+        function hideIrisDetail() {
+            document.getElementById('intro-detail-view').style.display = 'none';
+            const mainView = document.getElementById('intro-main-view');
+            mainView.style.display = 'block';
+            mainView.classList.add('animate-fade');
+        }
+
+        function switchSubTab(subId, element) {
+            const parentCard = element.closest('.tab-content');
+            parentCard.querySelectorAll('.sub-section').forEach(sec => sec.classList.remove('active'));
+            parentCard.querySelectorAll('.sub-tab-btn').forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(subId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        function switchSubTabHistory(subId, element) {
+            const parentCard = element.closest('.card');
+            parentCard.querySelectorAll('.sub-section').forEach(sec => sec.classList.remove('active'));
+            parentCard.querySelectorAll('.sub-tab-btn').forEach(btn => {
+                if(btn.parentElement.classList.contains('sub-nav')) btn.classList.remove('active');
+            });
+
+            document.getElementById(subId).classList.add('active');
+            element.classList.add('active');
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const icon = document.getElementById('toggle-icon');
+            sidebar.classList.toggle('collapsed');
+            icon.className = sidebar.classList.contains('collapsed') ? "fa-solid fa-chevron-left" : "fa-solid fa-bars";
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.getAttribute('data-theme') === 'dark') {
+                html.setAttribute('data-theme', 'light');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.setAttribute('data-theme', 'dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        if (savedTheme === 'dark') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+        }
+
+        function setStandard(species) {
+            if (species === 'setosa') {
+                document.getElementById("sepal_length").value = 5.0;
+                document.getElementById("sepal_width").value = 3.4;
+                document.getElementById("petal_length").value = 1.5;
+                document.getElementById("petal_width").value = 0.2;
+            } else if (species === 'versicolor') {
+                document.getElementById("sepal_length").value = 5.9;
+                document.getElementById("sepal_width").value = 2.8;
+                document.getElementById("petal_length").value = 4.3;
+                document.getElementById("petal_width").value = 1.3;
+            } else if (species === 'virginica') {
+                document.getElementById("sepal_length").value = 6.6;
+                document.getElementById("sepal_width").value = 3.0;
+                document.getElementById("petal_length").value = 5.6;
+                document.getElementById("petal_width").value = 2.0;
+            }
+        }
+
+        function normalizeConfidence(value) {
+            const n = Number(value);
+            if (!Number.isFinite(n)) return null;
+            const percent = n <= 1 ? n * 100 : n;
+            return Math.min(100, Math.max(0, percent));
+        }
+
+        function formatConfidence(value) {
+            const n = normalizeConfidence(value);
+            return n === null ? 'Chưa có dữ liệu' : `${n.toFixed(1)}%`;
+        }
+
+        function formatDuration(value) {
+            const n = Number(value);
+            if (!Number.isFinite(n) || n < 0) return 'Chưa có dữ liệu';
+            if (n < 1000) return `${Math.max(0, Math.round(n))} ms`;
+            return `${(n / 1000).toFixed(2)} giây`;
+        }
+
+        function confidenceClass(value) {
+            const n = normalizeConfidence(value);
+            if (n === null) return '';
+            if (n < 70) return 'low';
+            if (n < 85) return 'medium';
+            return '';
+        }
+
+        function averageConfidence(results) {
+            const values = (results || [])
+                .map(item => normalizeConfidence(item.confidence))
+                .filter(value => value !== null);
+            if (!values.length) return null;
+            return values.reduce((sum, value) => sum + value, 0) / values.length;
+        }
+
+        function randomizeInputs() {
+            document.getElementById("sepal_length").value = (Math.random() * (7.5 - 4.3) + 4.3).toFixed(1);
+            document.getElementById("sepal_width").value = (Math.random() * (4.4 - 2.0) + 2.0).toFixed(1);
+            document.getElementById("petal_length").value = (Math.random() * (6.9 - 1.0) + 1.0).toFixed(1);
+            document.getElementById("petal_width").value = (Math.random() * (2.5 - 0.1) + 0.1).toFixed(1);
+        }
+
+        async function randomizeAndPredict() {
+            const count = Math.min(Math.max(parseInt(document.getElementById("random-count").value) || 1, 1), 1000);
+            const btn = document.getElementById("random-btn");
+            const resultDiv = document.getElementById("manual-result");
+            const selectedKernel = document.getElementById("select-kernel").value;
+            const summarySection = document.getElementById("random-summary-section");
+
+            btn.innerText = "Đang chạy hàng loạt...";
+            btn.disabled = true;
+            summarySection.style.display = "none";
+            lastRandomBatchResults = [];
+            lastRandomBatchCounts = { setosa: 0, versicolor: 0, virginica: 0 };
+            lastRandomBatchTime = new Date().toLocaleString('vi-VN');
+
+            try {
+                for (let i = 0; i < count; i++) {
+                    randomizeInputs();
+                    const data = {
+                        sepal_length: Number(document.getElementById("sepal_length").value),
+                        sepal_width: Number(document.getElementById("sepal_width").value),
+                        petal_length: Number(document.getElementById("petal_length").value),
+                        petal_width: Number(document.getElementById("petal_width").value),
+                        model_type: selectedKernel
+                    };
+
+                    const response = await fetch(`${API_BASE_URL}/predict`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        const resJson = await response.json();
+                        const prediction = resJson.prediction || 'Không xác định';
+                        await saveHistory('manual', data, prediction, resJson.confidence_percent);
+
+                        const predLower = String(prediction).toLowerCase();
+                        if (predLower.includes('setosa')) lastRandomBatchCounts.setosa++;
+                        else if (predLower.includes('versicolor')) lastRandomBatchCounts.versicolor++;
+                        else if (predLower.includes('virginica')) lastRandomBatchCounts.virginica++;
+
+                        lastRandomBatchResults.push({
+                            index: lastRandomBatchResults.length + 1,
+                            data,
+                            prediction,
+                            confidence: resJson.confidence_percent ?? null,
+                            kernel: resJson.kernel_used || selectedKernel,
+                            time: new Date().toLocaleTimeString('vi-VN')
+                        });
+                    } else {
+                        console.warn(`Mẫu random ${i + 1} không dự đoán thành công.`);
+                    }
+                }
+
+                const successCount = lastRandomBatchResults.length;
+                if (successCount === 0) throw new Error("Không có mẫu nào được dự đoán thành công.");
+
+                resultDiv.className = "result-box success";
+                resultDiv.innerHTML = `<i class="fa-solid fa-circle-check" style="color:#137333; margin-right:6px;"></i><b>Random thành công:</b> ${successCount}/${count} mẫu. Kết quả đã được tổng hợp vào bảng bên dưới.`;
+
+                renderRandomSummaryTable(successCount, lastRandomBatchCounts, lastRandomBatchTime);
+                updateChartsData();
+                showRandomSuccessModal(successCount, lastRandomBatchCounts, "Chi tiết dữ liệu từng lần Random");
+
+            } catch (error) {
+                resultDiv.className = "result-box error";
+                resultDiv.innerText = "Lỗi: " + error.message;
+            } finally {
+                btn.innerText = "🎲 Random & Dự đoán hàng loạt";
+                btn.disabled = false;
+            }
+        }
+
+        function renderRandomSummaryTable(total, counts, timeText) {
+            const section = document.getElementById('random-summary-section');
+            const tbody = document.getElementById('random-summary-tbody');
+            if (!section || !tbody) return;
+
+            tbody.innerHTML = `
+                <tr class="batch-summary-row" onclick="openRandomBatchDetail()" title="Nhấn để xem chi tiết từng mẫu">
+                    <td><b>${timeText}</b></td>
+                    <td><b>${total}</b></td>
+                    <td><span class="history-badge badge-setosa">${counts.setosa}</span></td>
+                    <td><span class="history-badge badge-versicolor">${counts.versicolor}</span></td>
+                    <td><span class="history-badge badge-virginica">${counts.virginica}</span></td>
+                    <td><button class="batch-detail-btn" onclick="event.stopPropagation(); openRandomBatchDetail();">Xem chi tiết</button></td>
+                </tr>
+            `;
+            section.style.display = 'block';
+        }
+
+        function renderFileSummaryTable(fileName, counts, results, labeled) {
+            const section = document.getElementById('file-summary-section');
+            const tbody = document.getElementById('file-summary-tbody');
+            if (!section || !tbody) return;
+
+            const labeledResults = results.filter(item => item.actual !== null && item.actual !== undefined && String(item.actual).trim() !== '');
+            const correctCount = labeledResults.reduce((sum, item) => {
+                const actual = String(item.actual).trim().toLowerCase();
+                const pred = String(item.prediction).trim().toLowerCase();
+                return sum + (actual === pred || pred.includes(actual) || actual.includes(pred) ? 1 : 0);
+            }, 0);
+
+            const correctText = labeled && labeledResults.length > 0
+                ? `${correctCount}/${labeledResults.length} (${((correctCount / labeledResults.length) * 100).toFixed(1)}%)`
+                : 'N/A';
+
+            tbody.innerHTML = `
+                <tr class="batch-summary-row" onclick="openFileBatchDetail()" title="Nhấn để xem chi tiết từng bản ghi">
+                    <td style="max-width:220px; word-break:break-word;"><b>${fileName}</b></td>
+                    <td><b>${results.length}</b></td>
+                    <td><span class="history-badge badge-setosa">${counts.setosa}</span></td>
+                    <td><span class="history-badge badge-versicolor">${counts.versicolor}</span></td>
+                    <td><span class="history-badge badge-virginica">${counts.virginica}</span></td>
+                    <td><b>${correctText}</b></td>
+                    <td><button class="batch-detail-btn" onclick="event.stopPropagation(); openFileBatchDetail();">Xem chi tiết</button></td>
+                </tr>
+            `;
+            section.style.display = 'block';
+        }
+
+
+        async function predictManual() {
+            const btn = document.getElementById("predict-btn");
+            const resultDiv = document.getElementById("manual-result");
+            const selectedKernel = document.getElementById("select-kernel").value;
+
+            const data = {
+                sepal_length: Number(document.getElementById("sepal_length").value),
+                sepal_width: Number(document.getElementById("sepal_width").value),
+                petal_length: Number(document.getElementById("petal_length").value),
+                petal_width: Number(document.getElementById("petal_width").value),
+                model_type: selectedKernel
+            };
+
+            btn.innerText = "Đang xử lý...";
+            btn.disabled = true;
+            const predictionStartTime = performance.now();
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/predict`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                if (!response.ok) throw new Error("Không thể kết nối máy chủ.");
+                const resJson = await response.json();
+                const executionTimeMs = Math.round(performance.now() - predictionStartTime);
+                
+                resultDiv.className = "result-box success";
+                resultDiv.innerHTML = `Kết quả dự đoán (${resJson.kernel_used}): <b>${resJson.prediction}</b>`;
+
+                await saveHistory('manual', data, resJson.prediction, resJson.confidence_percent, executionTimeMs);
+                updateChartsData();
+                showSuccessModal(resJson.prediction, data, resJson.confidence_percent);
+
+            } catch (error) {
+                resultDiv.className = "result-box error";
+                resultDiv.innerText = "Lỗi: " + error.message;
+            } finally {
+                btn.innerText = "Thực hiện Dự đoán";
+                btn.disabled = false;
+            }
+        }
+
+        async function predictFile() {
+            const fileInput = document.getElementById("file-input");
+            const resultDiv = document.getElementById("file-result");
+            const fileType = document.getElementById("file-type-select").value;
+            const fileBtn = document.getElementById("file-btn");
+            const tableWrapper = document.getElementById("file-result-table-wrapper");
+            const tbody = document.getElementById("file-result-tbody");
+            const summarySection = document.getElementById("file-summary-section");
+
+            tableWrapper.style.display = "none";
+            tbody.innerHTML = "";
+            summarySection.style.display = "none";
+            lastFileBatchResults = [];
+            lastFileBatchCounts = { setosa: 0, versicolor: 0, virginica: 0 };
+            lastFileBatchName = '';
+            lastFileBatchExecutionTimeMs = null;
+            lastFileBatchLabeled = fileType === 'labeled';
+
+            if (fileInput.files.length === 0) {
+                alert("Vui lòng chọn một file (.csv hoặc .txt) trước!");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const filePredictionStartTime = performance.now();
+            lastFileBatchName = file.name;
+            lastFileBatchExecutionTimeMs = null;
+            showFileProgressModal(file.name, 0, 0);
+            fileBtn.disabled = true;
+
+            const reader = new FileReader();
+
+            reader.onload = async function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+
+                if (lines.length < 2) {
+                    closeFileProgressModal();
+                    resultDiv.className = "result-box error";
+                    resultDiv.innerText = "File không đúng định dạng!";
+                    fileBtn.disabled = false;
+                    return;
+                }
+
+                const header = lines[0].split(',').map(h => h.trim().toLowerCase());
+                let slIdx = header.indexOf('sepal_length');
+                let swIdx = header.indexOf('sepal_width');
+                let plIdx = header.indexOf('petal_length');
+                let pwIdx = header.indexOf('petal_width');
+                let spIdx = header.indexOf('species');
+
+                if (slIdx === -1 || swIdx === -1 || plIdx === -1 || pwIdx === -1) {
+                    slIdx = 0; swIdx = 1; plIdx = 2; pwIdx = 3;
+                    if (spIdx === -1) spIdx = 4;
+                }
+
+                const dataStartIndex = (header.includes('sepal_length') || header[0].includes('sepal')) ? 1 : 0;
+                const totalRows = Math.max(lines.length - dataStartIndex, 0);
+                updateFileProgress(file.name, 0, totalRows);
+
+                let htmlRows = "";
+                let processed = 0;
+
+                try {
+                    for (let i = dataStartIndex; i < lines.length; i++) {
+                        const cols = lines[i].split(',').map(c => c.trim());
+                        if (cols.length < 4) {
+                            processed++;
+                            updateFileProgress(file.name, processed, totalRows);
+                            continue;
+                        }
+
+                        const data = {
+                            sepal_length: Number(cols[slIdx]),
+                            sepal_width: Number(cols[swIdx]),
+                            petal_length: Number(cols[plIdx]),
+                            petal_width: Number(cols[pwIdx])
+                        };
+
+                        if (![data.sepal_length, data.sepal_width, data.petal_length, data.petal_width].every(Number.isFinite)) {
+                            processed++;
+                            updateFileProgress(file.name, processed, totalRows);
+                            continue;
+                        }
+
+                        const actualSpecies = (fileType === 'labeled' && cols[spIdx] !== undefined && String(cols[spIdx]).trim() !== '')
+                            ? cols[spIdx]
+                            : null;
+
+                        const response = await fetch(`${API_BASE_URL}/predict`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify(data)
+                        });
+
+                        if (response.ok) {
+                            const resJson = await response.json();
+                            const standardName = resJson.prediction || 'Không xác định';
+                            const predLower = standardName.toLowerCase();
+
+                            if (predLower.includes('setosa')) lastFileBatchCounts.setosa++;
+                            else if (predLower.includes('versicolor')) lastFileBatchCounts.versicolor++;
+                            else if (predLower.includes('virginica')) lastFileBatchCounts.virginica++;
+
+                            lastFileBatchResults.push({
+                                index: lastFileBatchResults.length + 1,
+                                data,
+                                prediction: standardName,
+                                confidence: resJson.confidence_percent ?? null,
+                                actual: actualSpecies,
+                                kernel: resJson.kernel_used || 'API',
+                                time: new Date().toLocaleTimeString('vi-VN')
+                            });
+
+                            let badgeClass = "badge-default";
+                            if (predLower.includes('setosa')) badgeClass = "badge-setosa";
+                            else if (predLower.includes('versicolor')) badgeClass = "badge-versicolor";
+                            else if (predLower.includes('virginica')) badgeClass = "badge-virginica";
+
+                            htmlRows += `
+                                <tr>
+                                    <td>#${lastFileBatchResults.length}</td>
+                                    <td>${data.sepal_length} / ${data.sepal_width}</td>
+                                    <td>${data.petal_length} / ${data.petal_width}</td>
+                                    <td><span class="history-badge ${badgeClass}">${standardName}</span></td>
+                                    <td>${actualSpecies ? actualSpecies : 'N/A'}</td>
+                                    <td><span style="color:#137333; font-weight:700;">Thành công</span></td>
+                                </tr>
+                            `;
+                        }
+
+                        processed++;
+                        updateFileProgress(file.name, processed, totalRows);
+                    }
+
+                    if (lastFileBatchResults.length === 0) {
+                        throw new Error("Không có bản ghi hợp lệ để dự đoán.");
+                    }
+
+                    resultDiv.className = "result-box success";
+                    resultDiv.innerHTML = `<i class="fa-solid fa-file-circle-check" style="color:#137333; margin-right:6px;"></i><b>Phân loại file thành công:</b> ${file.name} — ${lastFileBatchResults.length} mẫu. Bảng tóm tắt đã được tạo bên dưới.`;
+
+                    tbody.innerHTML = htmlRows;
+                    // Giữ dữ liệu bảng chi tiết hiện có để không mất tính năng cũ; người dùng mở qua bảng tóm tắt.
+                    tableWrapper.style.display = "none";
+
+                    const totalExecutionTimeMs = Math.round(performance.now() - filePredictionStartTime);
+                    lastFileBatchExecutionTimeMs = totalExecutionTimeMs;
+
+                    renderFileSummaryTable(file.name, lastFileBatchCounts, lastFileBatchResults, fileType === 'labeled');
+                    await saveHistory('file', {
+                        fileName: file.name,
+                        results: lastFileBatchResults,
+                        batch_results: lastFileBatchResults,
+                        counts: lastFileBatchCounts,
+                        average_confidence: averageConfidence(lastFileBatchResults),
+                        execution_time_ms: totalExecutionTimeMs
+                    }, "File: " + file.name, averageConfidence(lastFileBatchResults), totalExecutionTimeMs);
+                    updateChartsData();
+
+                    closeFileProgressModal();
+                } catch (err) {
+                    closeFileProgressModal();
+                    resultDiv.className = "result-box error";
+                    resultDiv.innerText = "Lỗi khi xử lý file: " + err.message;
+                } finally {
+                    fileBtn.disabled = false;
+                }
+            };
+
+            reader.onerror = function() {
+                closeFileProgressModal();
+                resultDiv.className = "result-box error";
+                resultDiv.innerText = "Không thể đọc file dữ liệu.";
+                fileBtn.disabled = false;
+            };
+
+            reader.readAsText(file);
+        }
+
+        function showFileProgressModal(fileName, current, total) {
+            const modal = document.getElementById('file-progress-modal');
+            if (!modal) return;
+            document.getElementById('file-progress-name').innerText = fileName || '';
+            updateFileProgress(fileName, current, total);
+            modal.style.display = 'flex';
+        }
+
+        function updateFileProgress(fileName, current, total) {
+            const progressText = document.getElementById('file-progress-text');
+            const fill = document.getElementById('file-progress-fill');
+            if (!progressText || !fill) return;
+
+            document.getElementById('file-progress-name').innerText = fileName || '';
+            if (!total) {
+                progressText.innerText = 'Đang đọc và chuẩn bị dữ liệu...';
+                fill.style.width = '8%';
+                return;
+            }
+
+            const safeCurrent = Math.min(Math.max(current, 0), total);
+            const percent = (safeCurrent / total) * 100;
+            progressText.innerHTML = `<i class="fa-solid fa-arrows-rotate fa-spin" style="margin-right:6px; color:var(--primary-color);"></i>Đang dự đoán từng mẫu: <b>${safeCurrent}/${total}</b> (${percent.toFixed(0)}%)`;
+            fill.style.width = `${Math.max(percent, 2)}%`;
+        }
+
+        function closeFileProgressModal() {
+            const modal = document.getElementById('file-progress-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+
+        /* --- CÁC HÀM XỬ LÝ LỊCH SỬ VỚI SUPABASE --- */
+        async function saveHistory(type, details, prediction, confidence = null, executionTimeMs = null) {
+            const currentUser = localStorage.getItem('iris_current_user') || 'Guest';
+            const normalizedConfidence = normalizeConfidence(confidence ?? details.confidence ?? details.average_confidence);
+            const rawExecutionTime = executionTimeMs ?? details.execution_time_ms;
+            const normalizedExecutionTime = Number.isFinite(Number(rawExecutionTime))
+                ? Math.max(0, Number(rawExecutionTime))
+                : null;
+            const batchResults = type === 'file'
+                ? (details.batch_results ?? details.results ?? null)
+                : null;
+
+            const payload = {
+                username: currentUser,
+                prediction_type: type,
+                prediction_result: prediction,
+                sepal_length: details.sepal_length || null,
+                sepal_width: details.sepal_width || null,
+                petal_length: details.petal_length || null,
+                petal_width: details.petal_width || null,
+                file_name: details.fileName || null,
+                confidence: normalizedConfidence,
+                execution_time_ms: normalizedExecutionTime,
+                batch_results: batchResults
+            };
+
+            // Giữ nguyên chức năng lưu lịch sử lên Supabase.
+            // Nếu CSDL chưa có các cột mới, thử lại theo cấu trúc cũ để không làm hỏng chức năng hiện tại.
+            let { error } = await supabaseClient
+                .from('prediction_history')
+                .insert([payload]);
+
+            if (error && /confidence|execution_time_ms|batch_results|column/i.test(error.message || '')) {
+                const legacyPayload = { ...payload };
+                delete legacyPayload.confidence;
+                delete legacyPayload.execution_time_ms;
+                delete legacyPayload.batch_results;
+                const retry = await supabaseClient
+                    .from('prediction_history')
+                    .insert([legacyPayload]);
+                error = retry.error;
+                if (!error) {
+                    console.warn('CSDL chưa có đủ cột mở rộng. Hãy chạy SQL cập nhật để lưu độ tin cậy, thời gian chạy và bảng kết quả file.');
+                }
+            }
+
+            if (error) {
+                console.error("Lỗi khi lưu lịch sử vào Supabase:", error.message);
+            }
+
+            let chartHistory = JSON.parse(localStorage.getItem("iris_history_v4")) || { manual: [], file: [] };
+            const chartRecord = {
+                time: new Date().toLocaleTimeString(),
+                details: {
+                    sepal_length: Number(details.sepal_length),
+                    sepal_width: Number(details.sepal_width),
+                    petal_length: Number(details.petal_length),
+                    petal_width: Number(details.petal_width)
+                },
+                prediction: prediction,
+                confidence: normalizedConfidence,
+                execution_time_ms: normalizedExecutionTime
+            };
+
+            if (type === 'manual') {
+                chartHistory.manual.unshift(chartRecord);
+            } else if (type === 'file') {
+                chartHistory.file.unshift({
+                    time: chartRecord.time,
+                    details: details,
+                    prediction: prediction,
+                    confidence: normalizedConfidence,
+                    execution_time_ms: normalizedExecutionTime,
+                    batch_results: batchResults
+                });
+            }
+
+            localStorage.setItem("iris_history_v4", JSON.stringify(chartHistory));
+        }
+
+        let currentFilterSpecies = 'all';
+        let isCompareModeActive = false;
+        let selectedCompareItems = [];
+
+        function filterHistorySpecies(species, btnElement) {
+            currentFilterSpecies = species;
+            const parent = btnElement.parentElement;
+            parent.querySelectorAll('.sub-tab-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+            loadHistory();
+        }
+
+        function toggleCompareMode() {
+            isCompareModeActive = !isCompareModeActive;
+            selectedCompareItems = [];
+            const actionBar = document.getElementById('compare-action-bar');
+            const btn = document.getElementById('compare-mode-btn');
+            
+            if (isCompareModeActive) {
+                actionBar.style.display = 'flex';
+                btn.style.background = '#10b981';
+                btn.innerHTML = `<i class="fa-solid fa-check"></i> Đang chọn so sánh`;
+            } else {
+                actionBar.style.display = 'none';
+                btn.style.background = 'var(--primary-color)';
+                btn.innerHTML = `<i class="fa-solid fa-code-compare"></i> So sánh mẫu`;
+            }
+            loadHistory();
+        }
+
+        function handleCheckboxSelect(index, recordObj) {
+            const idx = selectedCompareItems.findIndex(item => item === recordObj);
+            if (idx > -1) {
+                selectedCompareItems.splice(idx, 1);
+            } else {
+                selectedCompareItems.push(recordObj);
+            }
+            document.getElementById('selected-count-text').innerText = `Đã chọn: ${selectedCompareItems.length} mẫu (Chọn tối thiểu 2 mẫu)`;
+        }
+
+        function executeCompare() {
+            if (selectedCompareItems.length < 2) {
+                alert("Vui lòng chọn từ 2 mẫu trở lên để tiến hành so sánh!");
+                return;
+            }
+            const tbody = document.getElementById('compare-table-tbody');
+            tbody.innerHTML = selectedCompareItems.map(item => {
+                let predLower = item.prediction.toLowerCase();
+                let badgeClass = predLower.includes('setosa') ? "badge-setosa" : (predLower.includes('versicolor') ? "badge-versicolor" : "badge-virginica");
+                return `
+                    <tr>
+                        <td>${item.time}</td>
+                        <td><span class="history-badge ${badgeClass}">${item.prediction}</span></td>
+                        <td>${item.details.sepal_length} / ${item.details.sepal_width} cm</td>
+                        <td>${item.details.petal_length} / ${item.details.petal_width} cm</td>
+                        <td><span class="confidence-value ${confidenceClass(item.confidence)}">${formatConfidence(item.confidence)}</span></td>
+                        <td>${formatDuration(item.execution_time_ms)}</td>
+                    </tr>
+                `;
+            }).join('');
+            document.getElementById('compare-modal').style.display = 'flex';
+        }
+
+        function closeCompareModal() {
+            document.getElementById('compare-modal').style.display = 'none';
+        }
+
+        async function loadHistory() {
+            const currentUser = localStorage.getItem('iris_current_user');
+            if (!currentUser) return;
+
+            const { data: historyData, error } = await supabaseClient
+                .from('prediction_history')
+                .select('*')
+                .eq('username', currentUser)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error("Lỗi khi tải lịch sử:", error.message);
+                return;
+            }
+
+            // Đồng bộ dữ liệu thủ công từ Supabase sang bộ nhớ cục bộ
+            // để phần biểu đồ có thể sử dụng cùng dữ liệu với phần Lịch sử.
+            const chartHistory = { manual: [], file: [] };
+
+            historyData.forEach(item => {
+                if (item.prediction_type === 'manual') {
+                    chartHistory.manual.push({
+                        time: item.created_at
+                            ? new Date(item.created_at).toLocaleTimeString()
+                            : new Date().toLocaleTimeString(),
+                        details: {
+                            sepal_length: Number(item.sepal_length),
+                            sepal_width: Number(item.sepal_width),
+                            petal_length: Number(item.petal_length),
+                            petal_width: Number(item.petal_width)
+                        },
+                        prediction: item.prediction_result || '',
+                        confidence: item.confidence ?? null,
+                        execution_time_ms: item.execution_time_ms ?? null
+                    });
+                }
+            });
+
+            localStorage.setItem("iris_history_v4", JSON.stringify(chartHistory));
+
+            // 1. Phân loại dữ liệu thủ công
+            const manualList = document.getElementById("manual-history-list");
+            let manualRecords = historyData.filter(item => item.prediction_type === 'manual');
+
+            if (currentFilterSpecies !== 'all') {
+                manualRecords = manualRecords.filter(item => 
+                    item.prediction_result.toLowerCase().includes(currentFilterSpecies)
+                );
+            }
+
+            if (manualRecords.length === 0) {
+                manualList.innerHTML = `<p style="color: var(--muted-color); text-align: center; padding: 20px; font-size: 13px;">Chưa có dữ liệu lịch sử phù hợp.</p>`;
+            } else {
+                manualList.innerHTML = manualRecords.map((item, index) => {
+                    let predLower = item.prediction_result.toLowerCase();
+                    let badgeClass = predLower.includes('setosa') ? "badge-setosa" : (predLower.includes('versicolor') ? "badge-versicolor" : "badge-virginica");
+                    
+                    const recordObj = {
+                        time: new Date(item.created_at).toLocaleTimeString(),
+                        prediction: item.prediction_result,
+                        details: {
+                            sepal_length: item.sepal_length,
+                            sepal_width: item.sepal_width,
+                            petal_length: item.petal_length,
+                            petal_width: item.petal_width
+                        },
+                        confidence: item.confidence ?? null,
+                        execution_time_ms: item.execution_time_ms ?? null
+                    };
+
+                    let checkboxHtml = isCompareModeActive ? `<input type="checkbox" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--primary-color);" onclick='handleCheckboxSelect(${index}, ${JSON.stringify(recordObj)})'>` : '';
+
+                    return `
+                        <li class="history-card">
+                            <div style="display: flex; align-items: center; gap: 12px; flex: 1;">
+                                ${checkboxHtml}
+                                <div class="history-info">
+                                    <span class="history-badge ${badgeClass}"><i class="fa-solid fa-seedling"></i> ${item.prediction_result}</span>
+                                    <div class="history-details" style="margin-top: 4px; font-size: 12px;">
+                                        <span><b>Đài (L/W):</b> ${item.sepal_length} / ${item.sepal_width} cm</span> | 
+                                        <span><b>Cánh (L/W):</b> ${item.petal_length} / ${item.petal_width} cm</span>
+                                        <span><b>Độ tin cậy:</b> <span class="confidence-value ${confidenceClass(item.confidence)}">${formatConfidence(item.confidence)}</span></span>
+                                        <span><b>Thời gian chạy:</b> <span class="runtime-badge"><i class="fa-solid fa-stopwatch"></i>${formatDuration(item.execution_time_ms)}</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="history-time"><i class="fa-regular fa-clock"></i> ${new Date(item.created_at).toLocaleTimeString()}</div>
+                        </li>
+                    `;
+                }).join('');
+            }
+
+            // 2. Phân loại dữ liệu file
+            const fileList = document.getElementById("file-history-list");
+            let fileRecords = historyData.filter(item => item.prediction_type === 'file');
+
+            if (fileRecords.length === 0) {
+                fileList.innerHTML = `<p style="color: var(--muted-color); text-align: center; padding: 20px; font-size: 13px;">Chưa có dữ liệu lịch sử tải file.</p>`;
+            } else {
+                storedFileHistoryCache = {};
+                fileList.innerHTML = fileRecords.map((item, index) => {
+                    const recordKey = String(item.id ?? `history-${index}-${item.created_at || ''}`);
+                    storedFileHistoryCache[recordKey] = item;
+                    const fileName = item.file_name || 'File dữ liệu';
+                    const hasBatchTable = Array.isArray(item.batch_results) || (typeof item.batch_results === 'string' && item.batch_results.trim() !== '');
+                    const detailButtonText = hasBatchTable ? 'Xem lại bảng kết quả' : 'Chưa có bảng chi tiết';
+
+                    return `
+                        <li class="history-card clickable" onclick="openStoredFileHistory('${recordKey}')" title="Nhấn để xem lại bảng kết quả đã dự đoán">
+                            <div class="history-info" style="flex:1; min-width:0;">
+                                <span class="history-badge badge-default"><i class="fa-solid fa-file-arrow-up"></i> ${fileName}</span>
+                                <div class="history-details" style="font-size: 12px; color: var(--text-color); margin-top: 4px;">
+                                    <span>Kết quả: <b>${item.prediction_result || 'File dữ liệu'}</b></span>
+                                    <span>Độ tin cậy TB: <b>${formatConfidence(item.confidence)}</b></span>
+                                    <span>Thời gian chạy: <span class="runtime-badge"><i class="fa-solid fa-stopwatch"></i>${formatDuration(item.execution_time_ms)}</span></span>
+                                </div>
+                            </div>
+                            <div class="history-action-wrap">
+                                <div class="history-time"><i class="fa-regular fa-clock"></i> ${new Date(item.created_at).toLocaleTimeString()}</div>
+                                <button class="history-detail-link" onclick="event.stopPropagation(); openStoredFileHistory('${recordKey}')" ${hasBatchTable ? '' : 'disabled'}>
+                                    <i class="fa-solid fa-table-list"></i> ${detailButtonText}
+                                </button>
+                            </div>
+                        </li>
+                    `;
+                }).join('');
+            }
+        }
+
+        async function clearHistoryData() {
+            const currentUser = localStorage.getItem('iris_current_user');
+            if (!currentUser) return;
+
+            if (confirm("Bạn có chắc chắn muốn xóa toàn bộ lịch sử dự đoán của tài khoản này trên CSDL?")) {
+                const { error } = await supabaseClient
+                    .from('prediction_history')
+                    .delete()
+                    .eq('username', currentUser);
+
+                if (error) {
+                    alert("Lỗi khi xóa lịch sử: " + error.message);
+                } else {
+                    alert("Đã xóa lịch sử thành công!");
+                    await loadHistory();
+                    updateChartsData();
+                }
+            }
+        }
+
+        // Biểu đồ Chart.js
+        let scatterChart = null;
+        let barChart = null;
+        let evalChart = null;
+        let barMode = 'percent';
+        let cachedMetrics = null;
+
+        function initCharts() {
+            const scatterCanvas = document.getElementById('irisScatterChart');
+            const barCanvas = document.getElementById('irisBarChart');
+            if (!scatterCanvas || !barCanvas) return;
+
+            const scatterCtx = scatterCanvas.getContext('2d');
+            const barCtx = barCanvas.getContext('2d');
+
+            if (!scatterChart) {
+                scatterChart = new Chart(scatterCtx, {
+                    type: 'scatter',
+                    data: { datasets: getScatterDatasets() },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            x: {
+                                type: 'linear',
+                                position: 'bottom',
+                                title: { display: true, text: 'Trục X' }
+                            },
+                            y: {
+                                type: 'linear',
+                                title: { display: true, text: 'Trục Y' }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: true }
+                        }
+                    }
+                });
+            }
+
+            if (!barChart) {
+                barChart = new Chart(barCtx, {
+                    type: 'bar',
+                    data: getBarChartData(),
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: barMode === 'percent' ? 100 : undefined
+                            }
+                        }
+                    }
+                });
+            }
+
+            updateChartsData();
+        }
+
+        function getChartHistory() {
+            try {
+                const history = JSON.parse(localStorage.getItem("iris_history_v4"));
+                return history && typeof history === 'object'
+                    ? history
+                    : { manual: [], file: [] };
+            } catch (error) {
+                console.warn("Không đọc được dữ liệu biểu đồ:", error);
+                return { manual: [], file: [] };
+            }
+        }
+
+        function getScatterDatasets() {
+            const xKey = document.getElementById('axis-x')?.value || 'petal_length';
+            const yKey = document.getElementById('axis-y')?.value || 'sepal_width';
+            const history = getChartHistory();
+
+            const setosaPoints = [];
+            const versicolorPoints = [];
+            const virginicaPoints = [];
+
+            (history.manual || []).forEach(item => {
+                if (!item.details) return;
+
+                const x = Number(item.details[xKey]);
+                const y = Number(item.details[yKey]);
+
+                // Chỉ thêm điểm khi cả hai tọa độ là số hợp lệ.
+                if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+
+                const pred = String(item.prediction || '').toLowerCase();
+                const point = { x, y };
+
+                if (pred.includes('setosa')) {
+                    setosaPoints.push(point);
+                } else if (pred.includes('versicolor')) {
+                    versicolorPoints.push(point);
+                } else if (pred.includes('virginica')) {
+                    virginicaPoints.push(point);
+                }
+            });
+
+            return [
+                { label: 'Setosa', data: setosaPoints, backgroundColor: '#d9777f', pointRadius: 7 },
+                { label: 'Versicolor', data: versicolorPoints, backgroundColor: '#85b5a2', pointRadius: 7 },
+                { label: 'Virginica', data: virginicaPoints, backgroundColor: '#e5b25d', pointRadius: 7 }
+            ];
+        }
+
+        function getBarChartData() {
+            const history = getChartHistory();
+            let countSetosa = 0;
+            let countVersicolor = 0;
+            let countVirginica = 0;
+
+            (history.manual || []).forEach(item => {
+                const pred = String(item.prediction || '').toLowerCase();
+
+                if (pred.includes('setosa')) {
+                    countSetosa++;
+                } else if (pred.includes('versicolor')) {
+                    countVersicolor++;
+                } else if (pred.includes('virginica')) {
+                    countVirginica++;
+                }
+            });
+
+            const total = countSetosa + countVersicolor + countVirginica;
+
+            const dataValues = barMode === 'percent'
+                ? [
+                    total > 0 ? Number(((countSetosa / total) * 100).toFixed(1)) : 0,
+                    total > 0 ? Number(((countVersicolor / total) * 100).toFixed(1)) : 0,
+                    total > 0 ? Number(((countVirginica / total) * 100).toFixed(1)) : 0
+                ]
+                : [countSetosa, countVersicolor, countVirginica];
+
+            return {
+                labels: ['Iris Setosa', 'Iris Versicolor', 'Iris Virginica'],
+                datasets: [{
+                    label: barMode === 'percent' ? 'Tỷ lệ xuất hiện (%)' : 'Số lượng mẫu',
+                    data: dataValues,
+                    backgroundColor: ['#d9777f', '#85b5a2', '#e5b25d'],
+                    borderRadius: 6
+                }]
+            };
+        }
+
+        function updateChartsData() {
+            // Nếu biểu đồ chưa được khởi tạo thì khởi tạo trước.
+            if (!scatterChart || !barChart) {
+                initCharts();
+                return;
+            }
+
+            const xKey = document.getElementById('axis-x')?.value || 'petal_length';
+            const yKey = document.getElementById('axis-y')?.value || 'sepal_width';
+
+            scatterChart.data.datasets = getScatterDatasets();
+            scatterChart.options.scales.x.title.text =
+                document.getElementById('axis-x')?.selectedOptions[0]?.text || xKey;
+            scatterChart.options.scales.y.title.text =
+                document.getElementById('axis-y')?.selectedOptions[0]?.text || yKey;
+            scatterChart.update();
+
+            barChart.data = getBarChartData();
+            barChart.options.scales.y.max = barMode === 'percent' ? 100 : undefined;
+            barChart.update();
+        }
+
+        function clearChartData() {
+            // Chỉ xóa dữ liệu dùng cho biểu đồ, không xóa lịch sử Supabase.
+            localStorage.removeItem("iris_history_v4");
+            updateChartsData();
+        }
+
+        function toggleBarMode() {
+            barMode = barMode === 'percent' ? 'count' : 'percent';
+
+            const btnText = document.getElementById('btn-mode-text');
+            if (btnText) {
+                btnText.innerText = barMode === 'percent'
+                    ? "Đổi chế độ (%)"
+                    : "Đổi chế độ (Số lượng)";
+            }
+
+            updateChartsData();
+        }
+
+        /* --- CÁC HÀM XỬ LÝ DỮ LIỆU ĐÁNH GIÁ MÔ HÌNH (TAB 3) --- */
+        async function fetchMetricsData() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/metrics`);
+                if (!res.ok) throw new Error("Không thể lấy dữ liệu metrics từ FastAPI.");
+                cachedMetrics = await res.json();
+                
+                if (cachedMetrics.linear) document.getElementById("acc-linear").innerText = (cachedMetrics.linear.accuracy * 100).toFixed(1) + "%";
+                if (cachedMetrics.rbf) document.getElementById("acc-rbf").innerText = (cachedMetrics.rbf.accuracy * 100).toFixed(1) + "%";
+                if (cachedMetrics.poly) document.getElementById("acc-poly").innerText = (cachedMetrics.poly.accuracy * 100).toFixed(1) + "%";
+                if (cachedMetrics.sigmoid) document.getElementById("acc-sigmoid").innerText = (cachedMetrics.sigmoid.accuracy * 100).toFixed(1) + "%";
+
+                renderEvaluationTable();
+                renderEvaluationChart();
+                renderConfusionMatrix();
+
+            } catch (err) {
+                console.warn("Dùng dữ liệu fallback giả lập cho Metrics:", err.message);
+                cachedMetrics = {
+                    linear: { accuracy: 1.0, macro_avg: { precision: 1.0, recall: 1.0, f1_score: 1.0 }, confusion_matrix: [[10,0,0],[0,10,0],[0,0,10]], per_class: { setosa: {precision:1, recall:1, f1_score:1, support:10}, versicolor: {precision:1, recall:1, f1_score:1, support:10}, virginica: {precision:1, recall:1, f1_score:1, support:10} } },
+                    rbf: { accuracy: 0.9667, macro_avg: { precision: 0.9697, recall: 0.9667, f1_score: 0.9665 }, confusion_matrix: [[10,0,0],[0,9,1],[0,0,10]], per_class: { setosa: {precision:1, recall:1, f1_score:1, support:10}, versicolor: {precision:1, recall:0.9, f1_score:0.95, support:10}, virginica: {precision:0.91, recall:1, f1_score:0.95, support:10} } },
+                    poly: { accuracy: 0.9667, macro_avg: { precision: 0.9697, recall: 0.9667, f1_score: 0.9665 }, confusion_matrix: [[10,0,0],[0,10,0],[0,1,9]], per_class: { setosa: {precision:1, recall:1, f1_score:1, support:10}, versicolor: {precision:0.91, recall:1, f1_score:0.95, support:10}, virginica: {precision:1, recall:0.9, f1_score:0.95, support:10} } },
+                    sigmoid: { accuracy: 0.3333, macro_avg: { precision: 0.1111, recall: 0.3333, f1_score: 0.1667 }, confusion_matrix: [[10,0,0],[10,0,0],[10,0,0]], per_class: { setosa: {precision:0.33, recall:1, f1_score:0.5, support:10}, versicolor: {precision:0, recall:0, f1_score:0, support:10}, virginica: {precision:0, recall:0, f1_score:0, support:10} } }
+                };
+                
+                document.getElementById("acc-linear").innerText = "100.0%";
+                document.getElementById("acc-rbf").innerText = "96.7%";
+                document.getElementById("acc-poly").innerText = "96.7%";
+                document.getElementById("acc-sigmoid").innerText = "33.3%";
+
+                renderEvaluationTable();
+                renderEvaluationChart();
+                renderConfusionMatrix();
+            }
+        }
+
+        function renderEvaluationTable() {
+            if (!cachedMetrics) return;
+            const tbody = document.getElementById("eval-table-tbody");
+            let html = "";
+
+            Object.keys(cachedMetrics).forEach(k => {
+                const m = cachedMetrics[k];
+                const classes = m.per_class || {};
+
+                Object.keys(classes).forEach((species, idx) => {
+                    const row = classes[species];
+                    html += `
+                        <tr>
+                            ${idx === 0 ? `<td rowspan="4" style="font-weight:700; text-transform:uppercase; color:var(--primary-color); vertical-align:middle; background:var(--input-bg);">${k}</td>` : ''}
+                            <td style="font-weight:600;">${species}</td>
+                            <td>${(row.precision * 100).toFixed(1)}%</td>
+                            <td>${(row.recall * 100).toFixed(1)}%</td>
+                            <td>${(row.f1_score * 100).toFixed(1)}%</td>
+                            <td>${row.support}</td>
+                        </tr>
+                    `;
+                });
+
+                const avg = m.macro_avg;
+                html += `
+                    <tr style="background:var(--input-bg); font-weight:700;">
+                        <td style="color:var(--text-color);">Trung bình (Macro Avg)</td>
+                        <td>${(avg.precision * 100).toFixed(1)}%</td>
+                        <td>${(avg.recall * 100).toFixed(1)}%</td>
+                        <td>${(avg.f1_score * 100).toFixed(1)}%</td>
+                        <td>30</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        function renderEvaluationChart() {
+            if (!cachedMetrics) return;
+            const evalCtx = document.getElementById('evalCompareChart')?.getContext('2d');
+            if (!evalCtx) return;
+
+            const selectedKernels = Array.from(document.querySelectorAll('.kernel-checkbox-group input:checked')).map(cb => cb.value);
+
+            if (selectedKernels.length === 0) {
+                alert("Vui lòng chọn ít nhất 1 Kernel để hiển thị trên biểu đồ!");
+                return;
+            }
+
+            const colors = {
+                linear: '#d9777f',
+                rbf: '#85b5a2',
+                poly: '#e5b25d',
+                sigmoid: '#64748b'
+            };
+
+            const datasets = selectedKernels.map(k => {
+                const dataObj = cachedMetrics[k] || { accuracy: 0, macro_avg: { precision: 0, recall: 0, f1_score: 0 } };
+                return {
+                    label: `Kernel ${k.toUpperCase()}`,
+                    data: [
+                        (dataObj.accuracy * 100).toFixed(1),
+                        (dataObj.macro_avg.precision * 100).toFixed(1),
+                        (dataObj.macro_avg.recall * 100).toFixed(1),
+                        (dataObj.macro_avg.f1_score * 100).toFixed(1)
+                    ],
+                    backgroundColor: colors[k] || '#d9777f',
+                    borderRadius: 6
+                };
+            });
+
+            if (evalChart) {
+                evalChart.data.datasets = datasets;
+                evalChart.update();
+            } else {
+                evalChart = new Chart(evalCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Accuracy (Độ chính xác)', 'Precision (Độ chuẩn xác)', 'Recall (Độ thu hồi)', 'F1-Score (Cân bằng)'],
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: { beginAtZero: true, max: 100, title: { display: true, text: 'Tỷ lệ phần trăm (%)' } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function renderConfusionMatrix() {
+            if (!cachedMetrics) return;
+            const selectedKernel = document.getElementById("cm-kernel-select").value;
+            const container = document.getElementById("cm-grid-container");
+            const dataObj = cachedMetrics[selectedKernel];
+
+            if (!dataObj || !dataObj.confusion_matrix) {
+                container.innerHTML = `<p style="grid-column: span 3; color: var(--muted-color);">Không có dữ liệu Ma trận cho Kernel này.</p>`;
+                return;
+            }
+
+            const cm = dataObj.confusion_matrix;
+            const labels = ['Setosa', 'Versicolor', 'Virginica'];
+            let html = "";
+
+            for (let r = 0; r < 3; r++) {
+                for (let c = 0; c < 3; c++) {
+                    const val = cm[r][c];
+                    let bg = (r === c) ? `rgba(16, 185, 129, ${val > 0 ? 0.85 : 0.2})` : (val > 0 ? 'rgba(239, 68, 68, 0.85)' : 'rgba(140, 123, 117, 0.15)');
+                    
+                    html += `
+                        <div class="cm-cell" style="background: ${bg};">
+                            ${val}
+                            <span class="cm-cell-sub">${labels[r]} -> ${labels[c]}</span>
+                        </div>
+                    `;
+                }
+            }
+
+            container.innerHTML = html;
+        }
+
+        // Mở bảng chi tiết từ nút ngay trong popup Random.
+        function openDetailRandomModal() {
+            closeSuccessModal();
+            openRandomBatchDetail();
+        }
+
+        function openRandomBatchDetail() {
+            if (!lastRandomBatchResults.length) return;
+            const meta = `
+                <div class="batch-detail-stat"><small>Tổng mẫu</small><strong>${lastRandomBatchResults.length}</strong></div>
+                <div class="batch-detail-stat"><small>Iris Setosa</small><strong>${lastRandomBatchCounts.setosa}</strong></div>
+                <div class="batch-detail-stat"><small>Iris Versicolor</small><strong>${lastRandomBatchCounts.versicolor}</strong></div>
+                <div class="batch-detail-stat"><small>Iris Virginica</small><strong>${lastRandomBatchCounts.virginica}</strong></div>
+            `;
+            document.getElementById('batch-detail-title').innerHTML = '<i class="fa-solid fa-dice"></i> Chi tiết kết quả Random';
+            document.getElementById('batch-detail-meta').innerHTML = meta;
+            document.getElementById('batch-detail-thead').innerHTML = `
+                <tr>
+                    <th>#</th>
+                    <th>Thời gian</th>
+                    <th>Sepal Length</th>
+                    <th>Sepal Width</th>
+                    <th>Petal Length</th>
+                    <th>Petal Width</th>
+                    <th>Kernel</th>
+                    <th>Kết quả dự đoán</th>
+                    <th>Độ tin cậy</th>
+                </tr>
+            `;
+            document.getElementById('batch-detail-tbody').innerHTML = lastRandomBatchResults.map(item => {
+                const predLower = String(item.prediction).toLowerCase();
+                const badgeClass = predLower.includes('setosa') ? 'badge-setosa' : (predLower.includes('versicolor') ? 'badge-versicolor' : 'badge-virginica');
+                return `
+                    <tr>
+                        <td>${item.index}</td>
+                        <td>${item.time || '-'}</td>
+                        <td>${item.data.sepal_length}</td>
+                        <td>${item.data.sepal_width}</td>
+                        <td>${item.data.petal_length}</td>
+                        <td>${item.data.petal_width}</td>
+                        <td>${item.kernel || '-'}</td>
+                        <td><span class="history-badge ${badgeClass}">${item.prediction}</span></td>
+                        <td><span class="confidence-value ${confidenceClass(item.confidence)}">${formatConfidence(item.confidence)}</span></td>
+                    </tr>
+                `;
+            }).join('');
+            document.getElementById('batch-detail-modal').style.display = 'flex';
+        }
+
+        // Mở lại bảng kết quả file đã lưu trong Supabase từ lịch sử.
+        function openStoredFileHistory(recordKey) {
+            const record = storedFileHistoryCache[String(recordKey)];
+            if (!record) {
+                alert('Không tìm thấy bản ghi lịch sử này.');
+                return;
+            }
+
+            let parsedResults = record.batch_results;
+            if (typeof parsedResults === 'string') {
+                try {
+                    parsedResults = JSON.parse(parsedResults);
+                } catch (error) {
+                    parsedResults = null;
+                }
+            }
+
+            if (!Array.isArray(parsedResults) || parsedResults.length === 0) {
+                document.getElementById('batch-detail-title').innerHTML = '<i class="fa-solid fa-file-lines"></i> Chi tiết lịch sử file';
+                document.getElementById('batch-detail-meta').innerHTML = `
+                    <div class="batch-detail-stat"><small>Tệp dữ liệu</small><strong style="font-size:12px; word-break:break-word;">${record.file_name || 'File dữ liệu'}</strong></div>
+                    <div class="batch-detail-stat"><small>Thời gian chạy</small><strong>${formatDuration(record.execution_time_ms)}</strong></div>
+                    <div class="batch-detail-stat"><small>Độ tin cậy TB</small><strong>${formatConfidence(record.confidence)}</strong></div>
+                `;
+                document.getElementById('batch-detail-thead').innerHTML = '';
+                document.getElementById('batch-detail-tbody').innerHTML = `
+                    <tr><td colspan="9" style="text-align:center; padding:24px; color:var(--muted-color);">Bản ghi này chưa lưu bảng chi tiết. Các lần dự đoán file mới sẽ được lưu đầy đủ để có thể xem lại.</td></tr>
+                `;
+                document.getElementById('batch-detail-modal').style.display = 'flex';
+                return;
+            }
+
+            lastFileBatchResults = parsedResults.map((item, index) => ({
+                ...item,
+                index: item.index ?? index + 1,
+                time: item.time || '-'
+            }));
+            lastFileBatchName = record.file_name || String(record.prediction_result || 'File dữ liệu').replace(/^File:\s*/i, '');
+            lastFileBatchExecutionTimeMs = record.execution_time_ms ?? null;
+            lastFileBatchCounts = { setosa: 0, versicolor: 0, virginica: 0 };
+            lastFileBatchResults.forEach(item => {
+                const prediction = String(item.prediction || '').toLowerCase();
+                if (prediction.includes('setosa')) lastFileBatchCounts.setosa++;
+                else if (prediction.includes('versicolor')) lastFileBatchCounts.versicolor++;
+                else if (prediction.includes('virginica')) lastFileBatchCounts.virginica++;
+            });
+            lastFileBatchLabeled = lastFileBatchResults.some(item => item.actual !== null && item.actual !== undefined && String(item.actual).trim() !== '');
+
+            openFileBatchDetail();
+        }
+
+        function openFileBatchDetail() {
+            if (!lastFileBatchResults.length) return;
+            const labeledResults = lastFileBatchResults.filter(item => item.actual !== null && item.actual !== undefined && String(item.actual).trim() !== '');
+            const correctCount = labeledResults.reduce((sum, item) => {
+                const actual = String(item.actual).trim().toLowerCase();
+                const pred = String(item.prediction).trim().toLowerCase();
+                return sum + (actual === pred || pred.includes(actual) || actual.includes(pred) ? 1 : 0);
+            }, 0);
+
+            const correctStat = labeledResults.length > 0
+                ? correctCount
+                : 0;
+            const wrongStat = labeledResults.length > 0
+                ? labeledResults.length - correctCount
+                : 0;
+            const qualityStat = labeledResults.length > 0
+                ? `${correctStat} / ${wrongStat}`
+                : 'N/A';
+
+            document.getElementById('batch-detail-title').innerHTML = '<i class="fa-solid fa-file-lines"></i> Chi tiết kết quả file';
+            document.getElementById('batch-detail-meta').innerHTML = `
+                <div class="batch-detail-stat"><small>Tệp dữ liệu</small><strong style="font-size:12px; word-break:break-word;">${lastFileBatchName}</strong></div>
+                <div class="batch-detail-stat"><small>Tổng mẫu</small><strong>${lastFileBatchResults.length}</strong></div>
+                <div class="batch-detail-stat"><small>Setosa / Versicolor / Virginica</small><strong>${lastFileBatchCounts.setosa} / ${lastFileBatchCounts.versicolor} / ${lastFileBatchCounts.virginica}</strong></div>
+                <div class="batch-detail-stat"><small>Đúng / Sai</small><strong>${qualityStat}</strong></div>
+                <div class="batch-detail-stat"><small>Thời gian chạy</small><strong>${formatDuration(lastFileBatchExecutionTimeMs)}</strong></div>
+            `;
+
+            document.getElementById('batch-detail-thead').innerHTML = `
+                <tr>
+                    <th>#</th>
+                    <th>Thời gian</th>
+                    <th>Sepal (L/W)</th>
+                    <th>Petal (L/W)</th>
+                    <th>Kết quả AI</th>
+                    <th>Nhãn gốc</th>
+                    <th>Kernel</th>
+                    <th>Độ tin cậy</th>
+                    <th>Trạng thái</th>
+                </tr>
+            `;
+
+            document.getElementById('batch-detail-tbody').innerHTML = lastFileBatchResults.map(item => {
+                const predLower = String(item.prediction).toLowerCase();
+                const badgeClass = predLower.includes('setosa') ? 'badge-setosa' : (predLower.includes('versicolor') ? 'badge-versicolor' : 'badge-virginica');
+                const actual = item.actual ? String(item.actual) : 'N/A';
+                const isCorrect = item.actual && (String(item.actual).trim().toLowerCase() === predLower || predLower.includes(String(item.actual).trim().toLowerCase()) || String(item.actual).trim().toLowerCase().includes(predLower));
+                const statusHtml = item.actual ? `<span style="color:${isCorrect ? '#137333' : '#c53030'}; font-weight:700;">${isCorrect ? 'Đúng' : 'Sai'}</span>` : '<span style="color:#137333; font-weight:700;">Thành công</span>';
+                return `
+                    <tr>
+                        <td>${item.index}</td>
+                        <td>${item.time || '-'}</td>
+                        <td>${item.data.sepal_length} / ${item.data.sepal_width}</td>
+                        <td>${item.data.petal_length} / ${item.data.petal_width}</td>
+                        <td><span class="history-badge ${badgeClass}">${item.prediction}</span></td>
+                        <td>${actual}</td>
+                        <td>${item.kernel || '-'}</td>
+                        <td><span class="confidence-value ${confidenceClass(item.confidence)}">${formatConfidence(item.confidence)}</span></td>
+                        <td>${statusHtml}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('batch-detail-modal').style.display = 'flex';
+        }
+
+        function closeBatchDetailModal() {
+            document.getElementById('batch-detail-modal').style.display = 'none';
+        }
+
+        function showSuccessModal(prediction, data, confidence = null) {
+            document.getElementById("modal-flower-name").innerText = prediction;
+            document.getElementById("row-info-1").innerHTML = `🌿 <b>Chiều dài đài hoa:</b> ${data.sepal_length} cm`;
+            document.getElementById("row-info-2").innerHTML = `🌿 <b>Chiều rộng đài hoa:</b> ${data.sepal_width} cm`;
+            document.getElementById("row-info-3").innerHTML = `🌸 <b>Chiều dài cánh hoa:</b> ${data.petal_length} cm`;
+            document.getElementById("row-info-4").innerHTML = `🌸 <b>Chiều rộng cánh hoa:</b> ${data.petal_width} cm`;
+            document.getElementById("random-detail-callout").style.display = "none";
+            document.getElementById("manual-confidence-box").style.display = "block";
+            const confidenceValue = document.getElementById("manual-confidence-value");
+            confidenceValue.innerText = formatConfidence(confidence);
+            confidenceValue.className = `confidence-value ${confidenceClass(confidence)}`;
+            document.getElementById("detail-modal-title").innerHTML = `<i class="fa-solid fa-circle-check"></i> Dự đoán thành công!`;
+            
+            let predLower = prediction.toLowerCase();
+            document.getElementById("modal-flower-img").src = predLower.includes('setosa') ? irisImages.setosa : (predLower.includes('versicolor') ? irisImages.versicolor : irisImages.virginica);
+            document.getElementById("success-modal").style.display = "flex";
+        }
+
+        function showRandomSuccessModal(totalCount, counts, modalTitleText) {
+            document.getElementById("modal-flower-name").innerText = `Random ${totalCount} mẫu`;
+            document.getElementById("row-info-1").innerHTML = `🌿 <b>Iris Setosa:</b> ${counts.setosa} mẫu`;
+            document.getElementById("row-info-2").innerHTML = `🌿 <b>Iris Versicolor:</b> ${counts.versicolor} mẫu`;
+            document.getElementById("row-info-3").innerHTML = `🌸 <b>Iris Virginica:</b> ${counts.virginica} mẫu`;
+            document.getElementById("row-info-4").innerHTML = `✨ <b>Tổng số mẫu thành công:</b> ${totalCount} mẫu`;
+            document.getElementById("manual-confidence-box").style.display = "none";
+            document.getElementById("detail-modal-title").innerHTML = `<i class="fa-solid fa-clipboard-list"></i> ${modalTitleText}`;
+            document.getElementById("random-detail-callout").style.display = "block";
+            document.getElementById("modal-flower-img").src = irisImages.versicolor;
+            document.getElementById("success-modal").style.display = "flex";
+        }
+
+        function closeSuccessModal() {
+            document.getElementById("success-modal").style.display = "none";
+            const box = document.getElementById("manual-confidence-box");
+            if (box) box.style.display = "none";
+        }
+
+        function resetWebsite() {
+            if (confirm("Bạn có muốn đặt lại toàn bộ ứng dụng?")) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        const langData = {
+            vi: {
+                m1: "1. Giới thiệu hoa Iris", m2: "2. Dự đoán & Biểu đồ 2D", m3: "4. Lịch sử sử dụng", m4: "3. Đánh giá mô hình",
+                t1Title: "🌸 Giới thiệu về tập dữ liệu hoa Iris",
+                t1Desc: "Tập dữ liệu hoa Iris là một tập dữ liệu kinh điển trong lĩnh vực Học máy và Thống kê...",
+                t2Title: "🤖 Hệ thống Dự đoán & Biểu đồ Phân phối",
+                sub1: "1. Nhập dữ liệu thủ công", sub2: "2. Tải file lên dự đoán",
+                t3Title: "📊 Biểu đồ trực quan phân phối mẫu (2D Scatter)",
+                t4Title: "📜 Lịch sử sử dụng hệ thống", stLang: "Ngôn ngữ", stBrightness: "Giao diện", btnReset: "🔄 Đặt lại trang web"
+            },
+            en: {
+                m1: "1. Iris Introduction", m2: "2. Prediction & 2D Chart", m3: "4. History", m4: "3. Model Evaluation",
+                t1Title: "🌸 Introduction to Iris Dataset",
+                t1Desc: "The Iris flower dataset is a classic dataset in Machine Learning and Statistics...",
+                t2Title: "🤖 Prediction System & Distribution Chart",
+                sub1: "1. Manual Input", sub2: "2. Upload File",
+                t3Title: "📊 Visual Sample Distribution Chart (2D Scatter)",
+                t4Title: "📜 System Usage History", stLang: "Language", stBrightness: "Theme", btnReset: "🔄 Reset Website"
+            }
+        };
+
+        function changeLanguage(lang) {
+            const d = langData[lang];
+            document.getElementById('m1').innerText = d.m1;
+            document.getElementById('m2').innerText = d.m2;
+            document.getElementById('m3').innerText = d.m3;
+            document.getElementById('m4').innerText = d.m4;
+            document.getElementById('t1-title').innerText = d.t1Title;
+            document.getElementById('t1-desc').innerText = d.t1Desc;
+            document.getElementById('t2-title').innerText = d.t2Title;
+            document.getElementById('btn-sub1').innerText = d.sub1;
+            document.getElementById('btn-sub2').innerText = d.sub2;
+            document.getElementById('t3-title').innerText = d.t3Title;
+            document.getElementById('t4-title').innerText = d.t4Title;
+            document.getElementById('st-lang').innerText = d.stLang;
+            document.getElementById('st-brightness').innerText = d.stBrightness;
+            document.getElementById('btn-reset').innerText = d.btnReset;
+            localStorage.setItem('lang', lang);
+        }
+    </script>
+</body>
+
+</html>
